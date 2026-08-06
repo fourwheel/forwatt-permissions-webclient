@@ -55,6 +55,8 @@ npm start     # starts server/index.js, which also serves client/dist
 
 The port is controlled via the `PORT` environment variable (default: 8787).
 
+For deploying this to a CloudPanel-managed vServer, see [DEPLOY.md](DEPLOY.md).
+
 ## Usage
 
 1. In the "Authentication" section, select the environment (PRD or
