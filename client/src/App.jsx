@@ -1,7 +1,7 @@
 import { useState } from "react";
 import AuthPanel from "./components/AuthPanel.jsx";
 import EndpointForm from "./components/EndpointForm.jsx";
-import CreatePermissionRequestForm from "./components/CreatePermissionRequestForm.jsx";
+import PermissionRequestFlow from "./components/PermissionRequestFlow.jsx";
 
 const TABS = [
   { id: "prereq", label: "Prerequisites" },
@@ -55,7 +55,7 @@ export default function App() {
 
       {tab === "requests" && (
         <div className="tab-panel">
-          <CreatePermissionRequestForm auth={auth} />
+          <PermissionRequestFlow auth={auth} />
 
           <EndpointForm
             title="Get Permission Request"
