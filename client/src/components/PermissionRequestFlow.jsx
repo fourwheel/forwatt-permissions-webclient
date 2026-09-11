@@ -11,16 +11,13 @@ export default function PermissionRequestFlow({ auth }) {
       <DataHolderLookup auth={auth} onResult={setLookup} />
 
       {lookup?.status === "found" && (
-        <>
-          <div className="card">
-            <div className="response response--ok">
-              Match found - {lookup.holder?.displayName || "this data holder"} participates in
-              for.Watt and can be reached via the API. Use Id <code>{lookup.holder?.id}</code> in
-              the "Specify data holder" section of the relevant measurand request below.
-            </div>
+        <div className="card">
+          <div className="response response--ok">
+            Match found - {lookup.holder?.displayName || "this data holder"} participates in
+            for.Watt and can be reached via the API. Use Id <code>{lookup.holder?.id}</code> in
+            the "Specify data holder" section of the relevant measurand request below.
           </div>
-          <CreatePermissionRequestForm auth={auth} />
-        </>
+        </div>
       )}
 
       {lookup?.status === "not-found" && <BdewContactForm bdewCode={lookup.code} />}
@@ -33,6 +30,8 @@ export default function PermissionRequestFlow({ auth }) {
           </div>
         </div>
       )}
+
+      <CreatePermissionRequestForm auth={auth} />
     </div>
   );
 }
