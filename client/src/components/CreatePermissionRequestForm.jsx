@@ -3,14 +3,14 @@ import { callForwatt } from "../api.js";
 import { useApiCall } from "../useApiCall.js";
 import ResponseView from "./ResponseView.jsx";
 
-const emptyRecipient = { Id: "", roleType: "", BDEW: "" };
+const emptyRecipient = { Id: "", roleType: "ESP", BDEW: "" };
 const emptyMeasurand = {
   measurandCapabilityCode: "",
   codeValue: "",
   useAddress: false,
   address: { houseNumber: "", streetName: "", city: "", postalCode: "", country: "" },
   useDataHolder: false,
-  dataHolder: { Id: "", roleType: "", BDEW: "" },
+  dataHolder: { Id: "", roleType: "MPO", BDEW: "" },
 };
 
 function RecipientRow({ recipient, onChange, onRemove }) {
@@ -20,11 +20,6 @@ function RecipientRow({ recipient, onChange, onRemove }) {
         placeholder="Id (guid)"
         value={recipient.Id}
         onChange={(e) => onChange({ ...recipient, Id: e.target.value })}
-      />
-      <input
-        placeholder="roleType (e.g. ESP/MPO)"
-        value={recipient.roleType}
-        onChange={(e) => onChange({ ...recipient, roleType: e.target.value })}
       />
       <input
         placeholder="BDEW"
@@ -109,11 +104,6 @@ function MeasurandRow({ measurand, onChange, onRemove }) {
             placeholder="Id (guid)"
             value={measurand.dataHolder.Id}
             onChange={(e) => onChange({ ...measurand, dataHolder: { ...measurand.dataHolder, Id: e.target.value } })}
-          />
-          <input
-            placeholder="roleType (e.g. MPO)"
-            value={measurand.dataHolder.roleType}
-            onChange={(e) => onChange({ ...measurand, dataHolder: { ...measurand.dataHolder, roleType: e.target.value } })}
           />
           <input
             placeholder="BDEW"

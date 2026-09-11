@@ -14,8 +14,9 @@ export default function PermissionRequestFlow({ auth }) {
         <>
           <div className="card">
             <div className="response response--ok">
-              Match found - this data holder participates in for.Watt and can be reached via the API.
-              {lookup.holder?.roleType ? ` (roleType: ${lookup.holder.roleType})` : ""}
+              Match found - {lookup.holder?.displayName || "this data holder"} participates in
+              for.Watt and can be reached via the API. Use Id <code>{lookup.holder?.id}</code> in
+              the "Specify data holder" section of the relevant measurand request below.
             </div>
           </div>
           <CreatePermissionRequestForm auth={auth} />
