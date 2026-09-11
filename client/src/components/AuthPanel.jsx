@@ -1,12 +1,22 @@
 import { useState } from "react";
 import { fetchToken } from "../api.js";
 
+const API_BASE_URLS = {
+  prd: "https://api.traxes.io/forwatt",
+  acc: "https://api.ppd.traxes.io/forwatt",
+};
+
 export default function AuthPanel({ auth, setAuth }) {
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
   const [environment, setEnvironment] = useState("prd");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const changeEnvironment = (value) => {
+    setEnvironment(value);
+    setAuth((a) => ({ ...a, apiBaseUrl: API_BASE_URLS[value] }));
+  };
 
   const getToken = async (e) => {
     e.preventDefault();
@@ -32,7 +42,7 @@ export default function AuthPanel({ auth, setAuth }) {
       <form onSubmit={getToken} className="auth-form">
         <div className="field">
           <label>Environment</label>
-          <select value={environment} onChange={(e) => setEnvironment(e.target.value)}>
+          <select value={environment} onChange={(e) => changeEnvironment(e.target.value)}>
             <option value="prd">PRD (Production)</option>
             <option value="acc">ACC / PRPRD (Test)</option>
           </select>

@@ -69,9 +69,10 @@ For deploying this to a CloudPanel-managed vServer, see [DEPLOY.md](DEPLOY.md).
 3. The response (HTTP status + JSON) is shown directly below the
    respective form.
 
-The "API Base URL" in the auth section can be adjusted if needed, e.g. if
-the test/ACC environment requires a different base URL than
-`https://api.traxes.io/forwatt`.
+The "API Base URL" in the auth section is set automatically based on the
+selected environment (PRD: `https://api.traxes.io/forwatt`, ACC/PRPRD:
+`https://api.ppd.traxes.io/forwatt`) and can be overridden manually if
+needed.
 
 ## Security notes
 
