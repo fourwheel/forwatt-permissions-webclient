@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AuthPanel from "./components/AuthPanel.jsx";
 import EndpointForm from "./components/EndpointForm.jsx";
 import PermissionRequestFlow from "./components/PermissionRequestFlow.jsx";
@@ -9,9 +9,20 @@ const TABS = [
   { id: "records", label: "Permission Records" },
 ];
 
+function tabFromHash() {
+  const id = window.location.hash.slice(1);
+  return TABS.some((t) => t.id === id) ? id : TABS[0].id;
+}
+
 export default function App() {
   const [auth, setAuth] = useState({ token: null, apiBaseUrl: "https://api.traxes.io/forwatt" });
-  const [tab, setTab] = useState("prereq");
+  const [tab, setTab] = useState(tabFromHash);
+
+  useEffect(() => {
+    const onHashChange = () => setTab(tabFromHash());
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
 
   return (
     <div className="app">
@@ -24,9 +35,19 @@ export default function App() {
 
       <nav className="tabs">
         {TABS.map((t) => (
-          <button key={t.id} className={`tab ${tab === t.id ? "tab--active" : ""}`} onClick={() => setTab(t.id)}>
+          <a
+            key={t.id}
+            href={`#${t.id}`}
+            className={`tab ${tab === t.id ? "tab--active" : ""}`}
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+              e.preventDefault();
+              window.location.hash = t.id;
+              setTab(t.id);
+            }}
+          >
             {t.label}
-          </button>
+          </a>
         ))}
       </nav>
 
