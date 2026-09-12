@@ -63,6 +63,8 @@ export default function BdewContactForm({ bdewCode }) {
           </label>
           <input
             type="email"
+            name="recipientEmail"
+            autoComplete="on"
             value={recipientEmail}
             onChange={(e) => setRecipientEmail(e.target.value)}
             placeholder="contact@data-holder.example"
@@ -72,11 +74,11 @@ export default function BdewContactForm({ bdewCode }) {
           <label>
             Your company name (ESA/ESP)<span className="required">*</span>
           </label>
-          <input value={requesterName} onChange={(e) => setRequesterName(e.target.value)} />
+          <input name="requesterName" autoComplete="on" value={requesterName} onChange={(e) => setRequesterName(e.target.value)} />
         </div>
         <div className="field">
           <label>Your BDEW code (optional)</label>
-          <input value={requesterBdew} onChange={(e) => setRequesterBdew(e.target.value)} />
+          <input name="requesterBdew" autoComplete="on" value={requesterBdew} onChange={(e) => setRequesterBdew(e.target.value)} />
         </div>
         <div className="field">
           <label>
@@ -90,11 +92,11 @@ export default function BdewContactForm({ bdewCode }) {
         </div>
         <div className="field">
           <label>Metering point(s) (Malo/Melo, comma-separated)</label>
-          <input value={meteringPoints} onChange={(e) => setMeteringPoints(e.target.value)} placeholder="DE00...1, DE00...2" />
+          <input name="meteringPoints" autoComplete="on" value={meteringPoints} onChange={(e) => setMeteringPoints(e.target.value)} placeholder="DE00...1, DE00...2" />
         </div>
         <div className="field">
           <label>Purpose of the request</label>
-          <input value={purpose} onChange={(e) => setPurpose(e.target.value)} />
+          <input name="bdewContactPurpose" autoComplete="on" value={purpose} onChange={(e) => setPurpose(e.target.value)} />
         </div>
         <div className="field">
           <label>Additional notes</label>

@@ -78,7 +78,11 @@ needed.
 
 - The client secret leaves the server only toward the official token
   endpoint (`signin.energy` or `acc.signin.energy`) and is never logged
-  or stored.
+  or stored by this app. The Client ID and Client Secret inputs use
+  standard `username`/`current-password` autocomplete, so the browser
+  may offer to save them in its own password manager - that's the
+  browser's own opt-in behavior, not something this app writes to disk
+  or storage.
 - Destructive actions (terminate permission record, reject permission
   request) require explicit confirmation via a checkbox.
 - This app is intended for local use. For a production multi-user

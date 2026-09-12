@@ -17,12 +17,16 @@ function RecipientRow({ recipient, onChange, onRemove }) {
   return (
     <div className="subrow">
       <input
-        placeholder="Id (guid)"
+        name="recipientId"
+        autoComplete="on"
+        placeholder="Id (guid) - or BDEW below, not necessarily both"
         value={recipient.Id}
         onChange={(e) => onChange({ ...recipient, Id: e.target.value })}
       />
       <input
-        placeholder="BDEW"
+        name="recipientBdew"
+        autoComplete="on"
+        placeholder="BDEW - or Id above, not necessarily both"
         value={recipient.BDEW}
         onChange={(e) => onChange({ ...recipient, BDEW: e.target.value })}
       />
@@ -38,11 +42,15 @@ function MeasurandRow({ measurand, onChange, onRemove }) {
     <div className="subrow subrow--block">
       <div className="subrow">
         <input
+          name="measurandCapabilityCode"
+          autoComplete="on"
           placeholder="measurandCapabilityCode (BDEW code, e.g. 9991000001232)"
           value={measurand.measurandCapabilityCode}
           onChange={(e) => onChange({ ...measurand, measurandCapabilityCode: e.target.value })}
         />
         <input
+          name="codeValue"
+          autoComplete="on"
           placeholder="codeValue (Malo/Melo, optional)"
           value={measurand.codeValue}
           onChange={(e) => onChange({ ...measurand, codeValue: e.target.value })}
@@ -63,26 +71,36 @@ function MeasurandRow({ measurand, onChange, onRemove }) {
       {measurand.useAddress && (
         <div className="subrow">
           <input
+            name="streetName"
+            autoComplete="on"
             placeholder="Street"
             value={measurand.address.streetName}
             onChange={(e) => onChange({ ...measurand, address: { ...measurand.address, streetName: e.target.value } })}
           />
           <input
+            name="houseNumber"
+            autoComplete="on"
             placeholder="House number"
             value={measurand.address.houseNumber}
             onChange={(e) => onChange({ ...measurand, address: { ...measurand.address, houseNumber: e.target.value } })}
           />
           <input
+            name="postalCode"
+            autoComplete="on"
             placeholder="Postal code"
             value={measurand.address.postalCode}
             onChange={(e) => onChange({ ...measurand, address: { ...measurand.address, postalCode: e.target.value } })}
           />
           <input
+            name="city"
+            autoComplete="on"
             placeholder="City"
             value={measurand.address.city}
             onChange={(e) => onChange({ ...measurand, address: { ...measurand.address, city: e.target.value } })}
           />
           <input
+            name="country"
+            autoComplete="on"
             placeholder="Country"
             value={measurand.address.country}
             onChange={(e) => onChange({ ...measurand, address: { ...measurand.address, country: e.target.value } })}
@@ -96,17 +114,21 @@ function MeasurandRow({ measurand, onChange, onRemove }) {
           checked={measurand.useDataHolder}
           onChange={(e) => onChange({ ...measurand, useDataHolder: e.target.checked })}
         />
-        Specify data holder
+        Specify data holder (= the MPO, Id or BDEW - not necessarily both)
       </label>
       {measurand.useDataHolder && (
         <div className="subrow">
           <input
-            placeholder="Id (guid)"
+            name="dataHolderId"
+            autoComplete="on"
+            placeholder="Id (guid) - or BDEW below, not necessarily both"
             value={measurand.dataHolder.Id}
             onChange={(e) => onChange({ ...measurand, dataHolder: { ...measurand.dataHolder, Id: e.target.value } })}
           />
           <input
-            placeholder="BDEW"
+            name="dataHolderBdew"
+            autoComplete="on"
+            placeholder="BDEW - or Id above, not necessarily both"
             value={measurand.dataHolder.BDEW}
             onChange={(e) => onChange({ ...measurand, dataHolder: { ...measurand.dataHolder, BDEW: e.target.value } })}
           />
@@ -186,17 +208,24 @@ export default function CreatePermissionRequestForm({ auth }) {
           <label>Data End (empty = same as End)</label>
           <input type="date" value={dataEnd} onChange={(e) => setDataEnd(e.target.value)} />
         </div>
+        <p className="field__help">
+          Exactly one of "Service Id" and "Purpose" is required - not both, not neither.
+        </p>
         <div className="field">
-          <label>Service Id (guid, empty = generic "Data access request" service)</label>
-          <input value={serviceId} onChange={(e) => setServiceId(e.target.value)} placeholder="3b6168cb-f1f6-4fe2-a262-19a1b91332f1" />
+          <label>Service Id (guid) - or Purpose below, exactly one required</label>
+          <input name="serviceId" autoComplete="on" value={serviceId} onChange={(e) => setServiceId(e.target.value)} placeholder="3b6168cb-f1f6-4fe2-a262-19a1b91332f1" />
         </div>
         <div className="field">
-          <label>Purpose of the request (only relevant if no Service Id is given)</label>
-          <input value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder="Purpose of this permission request" />
+          <label>Purpose of the request - or Service Id above, exactly one required</label>
+          <input name="purpose" autoComplete="on" value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder="Purpose of this permission request" />
         </div>
 
         <fieldset>
-          <legend>Data Recipients</legend>
+          <legend>Data Recipients (= your ESP)</legend>
+          <p className="field__help">
+            Identifies your own company as the ESP receiving the data. Provide either the Id (guid) or
+            the BDEW code - not necessarily both.
+          </p>
           {recipients.map((r, i) => (
             <RecipientRow
               key={i}

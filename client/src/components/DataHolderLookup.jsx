@@ -49,7 +49,7 @@ export default function DataHolderLookup({ auth, onResult }) {
       <form onSubmit={check} className="lookup-form">
         <div className="field">
           <label>BDEW code of the target data holder<span className="required">*</span></label>
-          <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="9900000000001" />
+          <input name="dataHolderLookupCode" autoComplete="on" value={code} onChange={(e) => setCode(e.target.value)} placeholder="9900000000001" />
         </div>
         <button type="submit" disabled={!code || !auth.token || state.loading}>
           {state.loading ? "Checking..." : "Check"}

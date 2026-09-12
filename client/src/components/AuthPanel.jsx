@@ -36,8 +36,10 @@ export default function AuthPanel({ auth, setAuth }) {
     <section className="card card--auth">
       <h2>Authentication</h2>
       <p className="card__description">
-        Client ID and Client Secret are only used for this one request to the token endpoint and are never stored.
-        The resulting access token lives only in this browser tab's memory and is lost on page reload.
+        Client ID and Client Secret are only used for this one request to the token endpoint - this
+        app itself never stores them. Your browser may offer to save them in its own password manager;
+        that's the browser's own opt-in feature, not something this app controls. The resulting access
+        token lives only in this browser tab's memory and is lost on page reload.
       </p>
       <form onSubmit={getToken} className="auth-form">
         <div className="field">
@@ -49,11 +51,11 @@ export default function AuthPanel({ auth, setAuth }) {
         </div>
         <div className="field">
           <label>Client ID<span className="required">*</span></label>
-          <input value={clientId} onChange={(e) => setClientId(e.target.value)} autoComplete="off" />
+          <input name="clientId" value={clientId} onChange={(e) => setClientId(e.target.value)} autoComplete="username" />
         </div>
         <div className="field">
           <label>Client Secret<span className="required">*</span></label>
-          <input type="password" value={clientSecret} onChange={(e) => setClientSecret(e.target.value)} autoComplete="off" />
+          <input type="password" name="clientSecret" value={clientSecret} onChange={(e) => setClientSecret(e.target.value)} autoComplete="current-password" />
         </div>
         <div className="field">
           <label>API Base URL</label>
