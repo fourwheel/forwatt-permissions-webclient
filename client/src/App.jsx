@@ -30,8 +30,7 @@ export default function App() {
         ))}
       </nav>
 
-      {tab === "prereq" && (
-        <div className="tab-panel">
+      <div className="tab-panel" hidden={tab !== "prereq"}>
           <EndpointForm
             title="Measurand Capabilities"
             description="List of all measurand codes with their related information."
@@ -50,11 +49,9 @@ export default function App() {
             hasBody={false}
             auth={auth}
           />
-        </div>
-      )}
+      </div>
 
-      {tab === "requests" && (
-        <div className="tab-panel">
+      <div className="tab-panel" hidden={tab !== "requests"}>
           <PermissionRequestFlow auth={auth} />
 
           <EndpointForm
@@ -103,11 +100,9 @@ export default function App() {
             ]}
             auth={auth}
           />
-        </div>
-      )}
+      </div>
 
-      {tab === "records" && (
-        <div className="tab-panel">
+      <div className="tab-panel" hidden={tab !== "records"}>
           <EndpointForm
             title="Get Permission Record"
             description="Returns a single permission record."
@@ -164,8 +159,7 @@ export default function App() {
             ]}
             auth={auth}
           />
-        </div>
-      )}
+      </div>
 
       <footer className="app__footer">
         <p>Unofficial web client for the for.Watt Data Permissions API 2.0. No inputs or responses are stored.</p>
