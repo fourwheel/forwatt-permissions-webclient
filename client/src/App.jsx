@@ -126,7 +126,7 @@ export default function App() {
       <div className="tab-panel" hidden={tab !== "records"}>
           <EndpointForm
             title="Find Permission Records"
-            description="Searches permission records by filter criteria. Enter list fields as comma-separated values. This endpoint can also be used to find a permission record's id via its permission request id."
+            description={`Searches permission records by filter criteria. Enter list fields as comma-separated values. This endpoint can also be used to find a permission record's id via its permission request id - look for the "id" field in the response.`}
             method="POST"
             pathTemplate="v2/permissionrecord/find"
             hasBody
