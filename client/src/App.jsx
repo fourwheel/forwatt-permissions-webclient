@@ -88,19 +88,6 @@ export default function App() {
           />
 
           <EndpointForm
-            title="Reject Permission Request"
-            description="Rejects an existing permission request."
-            method="POST"
-            pathTemplate="v2/permissionrequest/reject/{id}"
-            hasBody={false}
-            danger
-            fields={[
-              { name: "id", label: "Permission Request Id (guid)", type: "text", required: true, isPath: true, placeholder: "3fa85f64-5717-4562-b3fc-2c963f66afa6" },
-            ]}
-            auth={auth}
-          />
-
-          <EndpointForm
             title="Permission Request State Changes"
             description="Returns status changes of permission requests matching the filter. Only the latest status change per permission request is returned."
             method="POST"
@@ -118,6 +105,19 @@ export default function App() {
               { name: "permissionRequestId", label: "Permission Request Id (guid)", type: "text" },
               { name: "pageSize", label: "Page Size (max 50, default 50)", type: "number" },
               { name: "pageNumber", label: "Page Number (default 1)", type: "number" },
+            ]}
+            auth={auth}
+          />
+
+          <EndpointForm
+            title="Reject Permission Request"
+            description="Rejects an existing permission request."
+            method="POST"
+            pathTemplate="v2/permissionrequest/reject/{id}"
+            hasBody={false}
+            danger
+            fields={[
+              { name: "id", label: "Permission Request Id (guid)", type: "text", required: true, isPath: true, placeholder: "3fa85f64-5717-4562-b3fc-2c963f66afa6" },
             ]}
             auth={auth}
           />
