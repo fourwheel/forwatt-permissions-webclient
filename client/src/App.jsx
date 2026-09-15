@@ -153,19 +153,6 @@ export default function App() {
           />
 
           <EndpointForm
-            title="Terminate Permission Record"
-            description="Terminates the permission record and all other permission records linked to the same permission request. This action cannot be undone."
-            method="DELETE"
-            pathTemplate="v2/permissionrecord/terminate/{id}"
-            hasBody={false}
-            danger
-            fields={[
-              { name: "id", label: "Permission Record Id (guid)", type: "text", required: true, isPath: true, placeholder: "3fa85f64-5717-4562-b3fc-2c963f66afa6" },
-            ]}
-            auth={auth}
-          />
-
-          <EndpointForm
             title="Permission Record State Changes (Terminated)"
             description="Returns termination status changes of permission records matching the filter."
             method="POST"
@@ -177,6 +164,19 @@ export default function App() {
               { name: "permissionRecordId", label: "Permission Record Id (guid)", type: "text" },
               { name: "pageSize", label: "Page Size (max 50, default 50)", type: "number" },
               { name: "pageNumber", label: "Page Number (default 1)", type: "number" },
+            ]}
+            auth={auth}
+          />
+
+          <EndpointForm
+            title="Terminate Permission Record"
+            description="Terminates the permission record and all other permission records linked to the same permission request. This action cannot be undone."
+            method="DELETE"
+            pathTemplate="v2/permissionrecord/terminate/{id}"
+            hasBody={false}
+            danger
+            fields={[
+              { name: "id", label: "Permission Record Id (guid)", type: "text", required: true, isPath: true, placeholder: "3fa85f64-5717-4562-b3fc-2c963f66afa6" },
             ]}
             auth={auth}
           />
