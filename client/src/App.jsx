@@ -125,6 +125,22 @@ export default function App() {
 
       <div className="tab-panel" hidden={tab !== "records"}>
           <EndpointForm
+            title="Find Permission Records"
+            description="Searches permission records by filter criteria. Enter list fields as comma-separated values. This endpoints can be used to find the id of a permission records via the permission request id"
+            method="POST"
+            pathTemplate="v2/permissionrecord/find"
+            hasBody
+            fields={[
+              { name: "permissionRecordId", label: "Permission Record Id (guid)", type: "text" },
+              { name: "dataOwnerId", label: "Data Owner Id (guid)", type: "text" },
+              { name: "deliveryPointIds", label: "Delivery Point Ids (comma-separated, guids)", type: "csv" },
+              { name: "permissionRequestIds", label: "Permission Request Ids (comma-separated, guids)", type: "csv" },
+              { name: "deliveryPointCodeValues", label: "Delivery Point Code Values / Malo-Melo (comma-separated)", type: "csv" },
+            ]}
+            auth={auth}
+          />
+
+          <EndpointForm
             title="Get Permission Record"
             description="Returns a single permission record."
             method="GET"
@@ -161,22 +177,6 @@ export default function App() {
               { name: "permissionRecordId", label: "Permission Record Id (guid)", type: "text" },
               { name: "pageSize", label: "Page Size (max 50, default 50)", type: "number" },
               { name: "pageNumber", label: "Page Number (default 1)", type: "number" },
-            ]}
-            auth={auth}
-          />
-
-          <EndpointForm
-            title="Find Permission Records"
-            description="Searches permission records by filter criteria. Enter list fields as comma-separated values."
-            method="POST"
-            pathTemplate="v2/permissionrecord/find"
-            hasBody
-            fields={[
-              { name: "permissionRecordId", label: "Permission Record Id (guid)", type: "text" },
-              { name: "dataOwnerId", label: "Data Owner Id (guid)", type: "text" },
-              { name: "deliveryPointIds", label: "Delivery Point Ids (comma-separated, guids)", type: "csv" },
-              { name: "permissionRequestIds", label: "Permission Request Ids (comma-separated, guids)", type: "csv" },
-              { name: "deliveryPointCodeValues", label: "Delivery Point Code Values / Malo-Melo (comma-separated)", type: "csv" },
             ]}
             auth={auth}
           />
