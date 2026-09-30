@@ -3,7 +3,6 @@ import { callForwatt } from "../api.js";
 import { useApiCall } from "../useApiCall.js";
 import ResponseView from "./ResponseView.jsx";
 
-const emptyRecipient = { Id: "", roleType: "ESP", BDEW: "" };
 const emptyMeasurand = {
   measurandCapabilityCode: "",
   codeValue: "",
@@ -12,30 +11,6 @@ const emptyMeasurand = {
   useDataHolder: false,
   dataHolder: { Id: "", roleType: "MPO", BDEW: "" },
 };
-
-function RecipientRow({ recipient, onChange, onRemove }) {
-  return (
-    <div className="subrow">
-      <input
-        name="recipientId"
-        autoComplete="on"
-        placeholder="Id (guid) - or BDEW below, not necessarily both"
-        value={recipient.Id}
-        onChange={(e) => onChange({ ...recipient, Id: e.target.value })}
-      />
-      <input
-        name="recipientBdew"
-        autoComplete="on"
-        placeholder="BDEW - or Id above, not necessarily both"
-        value={recipient.BDEW}
-        onChange={(e) => onChange({ ...recipient, BDEW: e.target.value })}
-      />
-      <button type="button" className="btn-remove" onClick={onRemove}>
-        Remove
-      </button>
-    </div>
-  );
-}
 
 function MeasurandRow({ measurand, onChange, onRemove }) {
   return (
@@ -145,7 +120,6 @@ export default function CreatePermissionRequestForm({ auth }) {
   const [dataEnd, setDataEnd] = useState("");
   const [serviceId, setServiceId] = useState("");
   const [purpose, setPurpose] = useState("");
-  const [recipients, setRecipients] = useState([]);
   const [measurands, setMeasurands] = useState([]);
 
   const [state, run] = useApiCall(async () => {
@@ -156,11 +130,6 @@ export default function CreatePermissionRequestForm({ auth }) {
       dataEnd: dataEnd || null,
       serviceId: serviceId || null,
       permissionRequestPurpose: purpose || null,
-      dataRecipients: recipients.map((r) => ({
-        Id: r.Id || null,
-        roleType: r.roleType || null,
-        BDEW: r.BDEW || null,
-      })),
       measurementRequestedInformation: measurands.map((m) => ({
         measurandCapabilityCode: m.measurandCapabilityCode,
         codeValue: m.codeValue || null,
@@ -219,25 +188,6 @@ export default function CreatePermissionRequestForm({ auth }) {
           <label>Purpose of the request - or Service Id above, exactly one required</label>
           <input name="purpose" autoComplete="on" value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder="Purpose of this permission request" />
         </div>
-
-        <fieldset>
-          <legend>Data Recipients (= your ESP)</legend>
-          <p className="field__help">
-            Identifies your own company as the ESP receiving the data. Provide either the Id (guid) or
-            the BDEW code - not necessarily both.
-          </p>
-          {recipients.map((r, i) => (
-            <RecipientRow
-              key={i}
-              recipient={r}
-              onChange={(next) => setRecipients((rs) => rs.map((x, idx) => (idx === i ? next : x)))}
-              onRemove={() => setRecipients((rs) => rs.filter((_, idx) => idx !== i))}
-            />
-          ))}
-          <button type="button" onClick={() => setRecipients((rs) => [...rs, { ...emptyRecipient }])}>
-            + Add data recipient
-          </button>
-        </fieldset>
 
         <fieldset>
           <legend>Measurand Requests</legend>
