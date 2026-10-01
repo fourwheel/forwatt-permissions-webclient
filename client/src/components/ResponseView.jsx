@@ -20,7 +20,17 @@ export default function ResponseView({ state }) {
   return (
     <div className={`response ${result.ok ? "response--ok" : "response--error"}`}>
       <div className="response__status">HTTP {result.status}</div>
-      <pre>{typeof result.data === "string" ? result.data : JSON.stringify(result.data, null, 2)}</pre>
+      {typeof result.data === "string" && /^https?:\/\/\S+$/.test(result.data) ? (
+        <p>
+          <a href={result.data} target="_blank" rel="noreferrer">
+            {result.data}
+          </a>
+        </p>
+      ) : result.data === null || result.data === "" ? (
+        <p>(empty response body)</p>
+      ) : (
+        <pre>{typeof result.data === "string" ? result.data : JSON.stringify(result.data, null, 2)}</pre>
+      )}
     </div>
   );
 }

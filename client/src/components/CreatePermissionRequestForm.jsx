@@ -3,32 +3,61 @@ import { callForwatt } from "../api.js";
 import { useApiCall } from "../useApiCall.js";
 import ResponseView from "./ResponseView.jsx";
 
+// Local date as YYYY-MM-DD, the format of <input type="date">.
+const todayIso = () => new Date().toLocaleDateString("sv-SE");
+
 const emptyMeasurand = {
   measurandCapabilityCode: "",
+  useDeliveryPoint: false,
   codeValue: "",
-  useAddress: false,
-  address: { houseNumber: "", streetName: "", city: "", postalCode: "", country: "" },
-  useDataHolder: false,
-  dataHolder: { Id: "", roleType: "MPO", BDEW: "" },
+  address: { houseNumber: "", streetName: "", city: "", postalCode: "", country: "DE" },
+  dataHolder: { Id: "", BDEW: "" },
 };
 
+// The API only accepts Malo/Melo, address and data holder together - all
+// three or none. The data holder is identified either by BDEW code alone
+// or by Id (with role type MPO), never by both.
+function measurandProblems(m, index) {
+  const label = `Measurand request ${index + 1}`;
+  const problems = [];
+  if (!m.measurandCapabilityCode) problems.push(`${label}: measurandCapabilityCode is required.`);
+  if (m.useDeliveryPoint) {
+    if (!m.codeValue) problems.push(`${label}: Malo/Melo is required when specifying a delivery point.`);
+    if (Object.values(m.address).some((v) => !v)) problems.push(`${label}: all address fields are required.`);
+    const hasId = Boolean(m.dataHolder.Id);
+    const hasBdew = Boolean(m.dataHolder.BDEW);
+    if (hasId === hasBdew) problems.push(`${label}: enter exactly one of data holder Id or BDEW code.`);
+  }
+  return problems;
+}
+
+function toRequestedInformation(m) {
+  if (!m.useDeliveryPoint) {
+    return { measurandCapabilityCode: m.measurandCapabilityCode, codeValue: null, deliveryPointAddress: null, dataHolder: null };
+  }
+  return {
+    measurandCapabilityCode: m.measurandCapabilityCode,
+    codeValue: m.codeValue,
+    deliveryPointAddress: m.address,
+    dataHolder: m.dataHolder.Id
+      ? { Id: m.dataHolder.Id, roleType: "MPO", BDEW: null }
+      : { Id: null, roleType: null, BDEW: m.dataHolder.BDEW },
+  };
+}
+
 function MeasurandRow({ measurand, onChange, onRemove }) {
+  const setAddress = (key, value) => onChange({ ...measurand, address: { ...measurand.address, [key]: value } });
+  const setDataHolder = (key, value) => onChange({ ...measurand, dataHolder: { ...measurand.dataHolder, [key]: value } });
+
   return (
     <div className="subrow subrow--block">
       <div className="subrow">
         <input
           name="measurandCapabilityCode"
           autoComplete="on"
-          placeholder="measurandCapabilityCode (BDEW code, e.g. 9991000001232)"
+          placeholder="measurandCapabilityCode (BDEW code, e.g. 9991000000747_cons)"
           value={measurand.measurandCapabilityCode}
           onChange={(e) => onChange({ ...measurand, measurandCapabilityCode: e.target.value })}
-        />
-        <input
-          name="codeValue"
-          autoComplete="on"
-          placeholder="codeValue (Malo/Melo, optional)"
-          value={measurand.codeValue}
-          onChange={(e) => onChange({ ...measurand, codeValue: e.target.value })}
         />
         <button type="button" className="btn-remove" onClick={onRemove}>
           Remove
@@ -38,89 +67,72 @@ function MeasurandRow({ measurand, onChange, onRemove }) {
       <label className="checkbox-row">
         <input
           type="checkbox"
-          checked={measurand.useAddress}
-          onChange={(e) => onChange({ ...measurand, useAddress: e.target.checked })}
+          checked={measurand.useDeliveryPoint}
+          onChange={(e) => onChange({ ...measurand, useDeliveryPoint: e.target.checked })}
         />
-        Specify delivery point address
+        Specify delivery point (Malo/Melo, address and data holder - all three are required together)
       </label>
-      {measurand.useAddress && (
-        <div className="subrow">
-          <input
-            name="streetName"
-            autoComplete="on"
-            placeholder="Street"
-            value={measurand.address.streetName}
-            onChange={(e) => onChange({ ...measurand, address: { ...measurand.address, streetName: e.target.value } })}
-          />
-          <input
-            name="houseNumber"
-            autoComplete="on"
-            placeholder="House number"
-            value={measurand.address.houseNumber}
-            onChange={(e) => onChange({ ...measurand, address: { ...measurand.address, houseNumber: e.target.value } })}
-          />
-          <input
-            name="postalCode"
-            autoComplete="on"
-            placeholder="Postal code"
-            value={measurand.address.postalCode}
-            onChange={(e) => onChange({ ...measurand, address: { ...measurand.address, postalCode: e.target.value } })}
-          />
-          <input
-            name="city"
-            autoComplete="on"
-            placeholder="City"
-            value={measurand.address.city}
-            onChange={(e) => onChange({ ...measurand, address: { ...measurand.address, city: e.target.value } })}
-          />
-          <input
-            name="country"
-            autoComplete="on"
-            placeholder="Country"
-            value={measurand.address.country}
-            onChange={(e) => onChange({ ...measurand, address: { ...measurand.address, country: e.target.value } })}
-          />
-        </div>
-      )}
-
-      <label className="checkbox-row">
-        <input
-          type="checkbox"
-          checked={measurand.useDataHolder}
-          onChange={(e) => onChange({ ...measurand, useDataHolder: e.target.checked })}
-        />
-        Specify data holder (= the MPO, Id or BDEW - not necessarily both)
-      </label>
-      {measurand.useDataHolder && (
-        <div className="subrow">
-          <input
-            name="dataHolderId"
-            autoComplete="on"
-            placeholder="Id (guid) - or BDEW below, not necessarily both"
-            value={measurand.dataHolder.Id}
-            onChange={(e) => onChange({ ...measurand, dataHolder: { ...measurand.dataHolder, Id: e.target.value } })}
-          />
-          <input
-            name="dataHolderBdew"
-            autoComplete="on"
-            placeholder="BDEW - or Id above, not necessarily both"
-            value={measurand.dataHolder.BDEW}
-            onChange={(e) => onChange({ ...measurand, dataHolder: { ...measurand.dataHolder, BDEW: e.target.value } })}
-          />
-        </div>
+      {measurand.useDeliveryPoint && (
+        <>
+          <div className="subrow">
+            <input
+              name="codeValue"
+              autoComplete="on"
+              placeholder="Malo/Melo (must match the code type of the measurand)"
+              value={measurand.codeValue}
+              onChange={(e) => onChange({ ...measurand, codeValue: e.target.value })}
+            />
+          </div>
+          <div className="subrow">
+            <input name="streetName" autoComplete="on" placeholder="Street" value={measurand.address.streetName} onChange={(e) => setAddress("streetName", e.target.value)} />
+            <input name="houseNumber" autoComplete="on" placeholder="House number" value={measurand.address.houseNumber} onChange={(e) => setAddress("houseNumber", e.target.value)} />
+            <input name="postalCode" autoComplete="on" placeholder="Postal code" value={measurand.address.postalCode} onChange={(e) => setAddress("postalCode", e.target.value)} />
+            <input name="city" autoComplete="on" placeholder="City" value={measurand.address.city} onChange={(e) => setAddress("city", e.target.value)} />
+            <input name="country" autoComplete="on" placeholder="Country (e.g. DE)" value={measurand.address.country} onChange={(e) => setAddress("country", e.target.value)} />
+          </div>
+          <p className="field__help">Data holder (= the MPO): enter exactly one of Id or BDEW code - not both.</p>
+          <div className="subrow">
+            <input
+              name="dataHolderId"
+              autoComplete="on"
+              placeholder="Data holder Id (guid) - or BDEW, not both"
+              value={measurand.dataHolder.Id}
+              onChange={(e) => setDataHolder("Id", e.target.value)}
+            />
+            <input
+              name="dataHolderBdew"
+              autoComplete="on"
+              placeholder="Data holder BDEW code - or Id, not both"
+              value={measurand.dataHolder.BDEW}
+              onChange={(e) => setDataHolder("BDEW", e.target.value)}
+            />
+          </div>
+        </>
       )}
     </div>
   );
 }
 
 export default function CreatePermissionRequestForm({ auth }) {
-  const [start, setStart] = useState("");
+  const [start, setStart] = useState(todayIso);
   const [end, setEnd] = useState("");
   const [dataStart, setDataStart] = useState("");
   const [dataEnd, setDataEnd] = useState("");
   const [serviceId, setServiceId] = useState("");
   const [purpose, setPurpose] = useState("");
   const [measurands, setMeasurands] = useState([]);
+
+  // Rules from the for.Watt business documentation (sections C and D).
+  const today = todayIso();
+  const problems = [
+    ...(Boolean(serviceId) === Boolean(purpose) ? ["Enter exactly one of Service Id or Purpose."] : []),
+    ...(start && start < today ? ["Start date must not be in the past."] : []),
+    ...(start && end && end < start ? ["End date must not be before the start date."] : []),
+    ...(dataStart && dataEnd && dataEnd < dataStart ? ["Data End must not be before Data Start."] : []),
+    ...(dataEnd && end && dataEnd > end ? ["Data End must not be after the End date."] : []),
+    ...(measurands.length === 0 ? ["At least one measurand request is required."] : []),
+    ...measurands.flatMap(measurandProblems),
+  ];
 
   const [state, run] = useApiCall(async () => {
     const body = {
@@ -130,12 +142,7 @@ export default function CreatePermissionRequestForm({ auth }) {
       dataEnd: dataEnd || null,
       serviceId: serviceId || null,
       permissionRequestPurpose: purpose || null,
-      measurementRequestedInformation: measurands.map((m) => ({
-        measurandCapabilityCode: m.measurandCapabilityCode,
-        codeValue: m.codeValue || null,
-        deliveryPointAddress: m.useAddress ? m.address : null,
-        dataHolder: m.useDataHolder ? { Id: m.dataHolder.Id || null, roleType: m.dataHolder.roleType || null, BDEW: m.dataHolder.BDEW || null } : null,
-      })),
+      measurementRequestedInformation: measurands.map(toRequestedInformation),
     };
     return callForwatt({
       path: "v2/permissionrequest/create",
@@ -209,7 +216,14 @@ export default function CreatePermissionRequestForm({ auth }) {
           </button>
         </fieldset>
 
-        <button type="submit" disabled={!start || state.loading}>
+        {problems.length > 0 && (
+          <ul className="field__help">
+            {problems.map((p) => (
+              <li key={p}>{p}</li>
+            ))}
+          </ul>
+        )}
+        <button type="submit" disabled={!start || problems.length > 0 || state.loading}>
           {state.loading ? "Sending..." : "Create permission request"}
         </button>
       </form>
