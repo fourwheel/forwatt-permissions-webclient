@@ -1,13 +1,20 @@
 import { useMemo } from "react";
 import { StatusBadge } from "../components/ui.jsx";
 import { useI18n } from "../lib/i18n.jsx";
-import { dateOf, formatDate, pick, requestIdOf, statusOf, statusTone } from "../lib/model.js";
+import { dateOf, formatDate, pick, recordStatusOf, requestIdOf, statusOf, statusTone } from "../lib/model.js";
 import { href } from "../lib/router.js";
 import { REQUEST_STATUSES } from "../lib/status.js";
 import { useData } from "../lib/store.jsx";
 import { requestParticipants } from "../lib/participants.js";
 import { ParticipantsInline, RoleIcon, participantsSummary } from "../components/Participants.jsx";
 import { NeedsConnection } from "./RequestsView.jsx";
+
+// Whose turn it is, shown as role icons on the status tiles.
+const STATUS_ICONS = {
+  created: ["dataOwner"],
+  waitingForApproval: ["mpo"],
+  approved: ["esp", "dataOwner", "mpo"],
+};
 
 export default function Dashboard() {
   const { auth, requests, records, refresh, details, catalog, recordsForRequest } = useData();
@@ -33,11 +40,20 @@ export default function Dashboard() {
     return d ? requestParticipants(d, r, recordsForRequest(requestIdOf(r)), catalog.dataHolders) : null;
   };
   const infos = requests.items.map(infoOf).filter(Boolean);
-  const waiting = {
-    dataOwner: infos.filter((i) => i.waitingFor === "dataOwner").length,
-    mpo: infos.filter((i) => i.waitingFor === "mpo").length,
-    ready: infos.filter((i) => i.ready).length,
+  // Breakdown of the approved requests (needs request details + records).
+  const approvedInfos = infos.filter((i) => ["ok", "revoked", "ended"].includes(i.parts.mpo.state) && !i.waitingFor);
+  const approvedBreakdown = {
+    ready: approvedInfos.filter((i) => i.ready).length,
+    revoked: approvedInfos.filter((i) => Object.values(i.parts).some((p) => p.state === "revoked")).length,
+    notStarted: approvedInfos.filter((i) => i.notStarted).length,
+    ended: approvedInfos.filter((i) => Object.values(i.parts).every((p) => p.state === "ended")).length,
   };
+  const approvedParts = [
+    approvedBreakdown.ready && t("{n} ready", { n: approvedBreakdown.ready }),
+    approvedBreakdown.revoked && t("{n} revoked", { n: approvedBreakdown.revoked }),
+    approvedBreakdown.notStarted && t("{n} not started yet", { n: approvedBreakdown.notStarted }),
+    approvedBreakdown.ended && t("{n} ended", { n: approvedBreakdown.ended }),
+  ].filter(Boolean);
 
   if (!auth.token) return <NeedsConnection />;
 
@@ -62,44 +78,37 @@ export default function Dashboard() {
 
       {requests.error && <div className="response response--error">{requests.error}</div>}
 
-      <div className="tiles tiles--focus">
-        <a href={href("requests")} className="tile tile--warn">
-          <div className="tile__head">
-            <RoleIcon role="dataOwner" size={22} />
-          </div>
-          <div className="tile__value">{details.loading && !infos.length ? "…" : waiting.dataOwner}</div>
-          <div className="tile__label">{t("Waiting for the grid user")}</div>
+      {/* One row that adds up: total = sum of the five status tiles. */}
+      <div className="tiles tiles--status">
+        <a href={href("requests")} className="tile tile--total">
+          <div className="tile__value">{loading && !requests.loadedAt ? "…" : requests.items.length}</div>
+          <div className="tile__label">{t("Permission requests in total")}</div>
+          <div className="tile__sub">{t("= sum of the tiles on the right")}</div>
         </a>
-        <a href={href("requests")} className="tile tile--warn">
-          <div className="tile__head">
-            <RoleIcon role="mpo" size={22} />
-          </div>
-          <div className="tile__value">{details.loading && !infos.length ? "…" : waiting.mpo}</div>
-          <div className="tile__label">{t("Waiting for the metering point operator")}</div>
-        </a>
-        <a href={href("records")} className="tile tile--ok">
-          <div className="tile__head">
-            <RoleIcon role="esp" size={22} />
-            <RoleIcon role="dataOwner" size={22} />
-            <RoleIcon role="mpo" size={22} />
-          </div>
-          <div className="tile__value">{details.loading && !infos.length ? "…" : waiting.ready}</div>
-          <div className="tile__label">{t("Ready – all three agreed")}</div>
-        </a>
-      </div>
-
-      <div className="tiles">
         {REQUEST_STATUSES.map((s) => (
           <a key={s.id} href={href("requests")} className={`tile tile--${statusTone(s.id)}`} title={t(s.description)}>
+            <div className="tile__head">
+              {STATUS_ICONS[s.id]?.map((r) => (
+                <RoleIcon key={r} role={r} size={20} />
+              ))}
+            </div>
             <div className="tile__value">{loading && !requests.loadedAt ? "…" : counts[s.id] ?? 0}</div>
             <div className="tile__label">{t(s.label)}</div>
+            <div className="tile__sub">
+              {s.id === "approved" && approvedParts.length ? approvedParts.join(" · ") : t(s.hint)}
+            </div>
           </a>
         ))}
-        <a href={href("records")} className="tile tile--primary">
-          <div className="tile__value">{records.loading && !records.loadedAt ? "…" : records.items.length}</div>
-          <div className="tile__label">{t("Permission records")}</div>
-        </a>
       </div>
+      <p className="tiles-note">
+        <a href={href("records")}>
+          {t("{n} permission records", { n: records.loading && !records.loadedAt ? "…" : records.items.length })}
+        </a>
+        {" – "}
+        {t("{n} active", { n: records.items.filter((r) => recordStatusOf(r) === "active").length })}
+        {" · "}
+        {t("one record per delivery point, so the number can differ from the requests")}
+      </p>
 
       <div className="card">
         <h2>{t("Latest permission requests")}</h2>

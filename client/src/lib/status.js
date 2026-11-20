@@ -4,12 +4,14 @@ export const REQUEST_STATUSES = [
   {
     id: "created",
     label: "Created",
+    hint: "waiting for the grid user's consent",
     description: "The energy service provider created the request. Waiting for the grid user to provide information and grant permission.",
     next: "Grid user",
   },
   {
     id: "waitingForApproval",
-    label: "Waiting for approval",
+    label: "Waiting for MPO approval",
+    hint: "grid user agreed, metering point operator validates",
     description:
       "The grid user granted permission (with or without modifying the provider's data). Waiting for the metering point operator to validate it.",
     next: "Metering point operator",
@@ -17,12 +19,14 @@ export const REQUEST_STATUSES = [
   {
     id: "approved",
     label: "Approved",
+    hint: "validated by the metering point operator",
     description: "The metering point operator validated the request previously granted by the grid user.",
     final: true,
   },
   {
     id: "rejected",
     label: "Rejected",
+    hint: "by the provider, grid user or metering point operator",
     description:
       "Rejected by the energy service provider or the grid user in their portals, by the metering point operator during validation, or cancelled by the energy service provider via the API.",
     final: true,
@@ -30,6 +34,7 @@ export const REQUEST_STATUSES = [
   {
     id: "expired",
     label: "Expired",
+    hint: "no response before the end date",
     description:
       "The metering point operator or grid user did not react before the request end date; a nightly job changed the status automatically.",
     final: true,

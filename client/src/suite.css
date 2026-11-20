@@ -1595,3 +1595,42 @@ a {
     display: none;
   }
 }
+
+/* Dashboard tile sub-lines and total tile */
+.tile__sub {
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.tile--total {
+  border-top-color: var(--text);
+}
+
+.tiles-title {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin: 0 0 0.6rem;
+}
+
+.tiles--focus {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* Dashboard status row: total + five statuses in one line */
+.tiles--status {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.tiles--status .tile__head {
+  min-height: 20px;
+}
+
+.tiles-note {
+  margin: -0.4rem 0 1.25rem;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}

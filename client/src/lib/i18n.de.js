@@ -101,7 +101,7 @@ export default {
 
   // --- Statuses
   Created: "Erstellt",
-  "Waiting for approval": "Wartet auf Freigabe",
+  "Waiting for MPO approval": "Wartet auf MSB-Freigabe",
   Approved: "Genehmigt",
   Rejected: "Abgelehnt",
   Expired: "Abgelaufen",
@@ -109,8 +109,8 @@ export default {
   Inactive: "Inaktiv",
   Revoked: "Widerrufen",
   Terminated: "Beendet",
-  "Created → Waiting for approval → Approved | Rejected | Expired":
-    "Erstellt → Wartet auf Freigabe → Genehmigt | Abgelehnt | Abgelaufen",
+  "Created → Waiting for MPO approval → Approved | Rejected | Expired":
+    "Erstellt → Wartet auf MSB-Freigabe → Genehmigt | Abgelehnt | Abgelaufen",
   "Next step: {who}.": "Nächster Schritt: {who}.",
   "The current date is after the start and before the end date.": "Das heutige Datum liegt zwischen Start- und Enddatum.",
   "The current date is before the start date (or after the end date).":
@@ -358,6 +358,30 @@ export default {
   "BDEW {code} from the original request is not an active metering point operator.": "BDEW {code} aus dem ursprünglichen Request ist kein aktiver Messstellenbetreiber.",
   ESP: "ESA",
   MPO: "MSB",
+
+  // --- Dashboard tiles
+  "waiting for the grid user's consent": "wartet auf Zustimmung des Anschlussnutzers",
+  "grid user agreed, metering point operator validates": "Anschlussnutzer hat zugestimmt, MSB prüft",
+  "validated by the metering point operator": "vom Messstellenbetreiber bestätigt",
+  "by the provider, grid user or metering point operator": "durch ESA, Anschlussnutzer oder MSB",
+  "no response before the end date": "keine Reaktion bis zum Enddatum",
+  "Request created, grid user has not yet agreed": "Request erstellt, Anschlussnutzer hat noch nicht zugestimmt",
+  "Grid user agreed, validation by the MPO pending": "Anschlussnutzer hat zugestimmt, Prüfung durch den MSB ausstehend",
+  "Metering data can be transferred to the ESP": "Messdaten können an ESA übertragen werden",
+  "Permission requests by status": "Permission Requests nach Status",
+  Total: "Gesamt",
+  "all permission requests": "alle Permission Requests",
+  "{n} active": "davon {n} aktiv",
+
+  "Permission requests in total": "Permission Requests gesamt",
+  "= sum of the tiles on the right": "= Summe der Kacheln rechts",
+  "{n} permission records": "{n} Permission Records",
+  "one record per delivery point, so the number can differ from the requests":
+    "ein Record pro Lieferstelle, daher kann die Zahl von den Requests abweichen",
+  "{n} ready": "{n} bereit",
+  "{n} revoked": "{n} widerrufen",
+  "{n} not started yet": "{n} noch nicht gestartet",
+  "{n} ended": "{n} beendet",
 
   // --- Navigation groups
   Operations: "Operativ",

@@ -204,7 +204,7 @@ export default function RequestsView() {
       <div className="card">
         <StatusChips items={requests.items} states={REQUEST_STATES} value={status} onChange={setStatus} />
         <ParticipantsLegend />
-        <StatusLegend statuses={REQUEST_STATUSES} flow={t("Created → Waiting for approval → Approved | Rejected | Expired")} />
+        <StatusLegend statuses={REQUEST_STATUSES} flow={t("Created → Waiting for MPO approval → Approved | Rejected | Expired")} />
         {requests.loading && requests.items.length === 0 ? (
           <p className="field__help">{t("Loading permission requests...")}</p>
         ) : requests.items.length === 0 ? (
