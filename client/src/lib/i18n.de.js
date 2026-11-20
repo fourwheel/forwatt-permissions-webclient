@@ -315,7 +315,7 @@ export default {
   "Not involved yet": "Noch nicht an der Reihe",
   "Did not respond in time": "Nicht rechtzeitig reagiert",
   "Permission period ended": "Berechtigungszeitraum beendet",
-  "Ready – data can be ordered": "Bereit – Daten können bestellt werden",
+  "Ready – metering data can be transferred to the ESP": "Bereit – Messdaten können an ESA übertragen werden",
   "Waiting for {who}": "Wartet auf {who}",
   "Revoked by {who}": "Widerrufen von {who}",
   "Rejected by {who}": "Abgelehnt von {who}",

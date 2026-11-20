@@ -97,7 +97,7 @@ export function ParticipantsInline({ info }) {
 /** One-line summary: "Waiting for MSB", "Ready", "Revoked by data owner", ... */
 export function participantsSummary(info, t) {
   if (!info) return "";
-  if (info.ready) return t("Ready – data can be ordered");
+  if (info.ready) return t("Ready – metering data can be transferred to the ESP");
   if (info.waitingFor) return t("Waiting for {who}", { who: t(ROLE_LABELS[info.waitingFor]) });
   const states = ROLES.map((r) => info.parts[r].state);
   if (states.includes("revoked")) return t("Revoked by {who}", { who: t(ROLE_LABELS[info.actor] ?? "unknown") });
