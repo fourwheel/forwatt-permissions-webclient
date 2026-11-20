@@ -155,7 +155,7 @@ export default function RequestDetail({ id }) {
             {detail.loading ? t("Loading...") : t("Refresh")}
           </button>
           <button type="button" className="btn btn--ghost" onClick={duplicate} disabled={!data}>
-            {t("Duplicate & edit")}
+            {t("Use as template")}
           </button>
           <button
             type="button"
@@ -206,9 +206,7 @@ export default function RequestDetail({ id }) {
         )}
         {completionUrl && (
           <Fact label={t("Completion link")}>
-            <a href={completionUrl} target="_blank" rel="noreferrer">
-              {t("Open")}
-            </a>
+            <CopyButton value={completionUrl} label={t("Copy link")} />
           </Fact>
         )}
       </div>
@@ -276,7 +274,7 @@ export default function RequestDetail({ id }) {
           {t("The permission request will be rejected (cancelled) by you as the energy service provider:")} <code className="mono">{id}</code>
         </p>
         <p>
-          {t('The for.Watt API does not allow editing a request - to change it, use "Duplicate & edit" to create a new one.')}
+          {t('The for.Watt API does not allow editing a request - to change it, use "Use as template" to create a new one.')}
         </p>
       </ConfirmDialog>
     </div>

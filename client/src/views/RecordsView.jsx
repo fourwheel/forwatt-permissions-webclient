@@ -3,7 +3,7 @@ import DataTable from "../components/DataTable.jsx";
 import { EmptyState } from "../components/ui.jsx";
 import { holderForRecord, pick, recordDeliveryPointOf, recordIdOf, recordRequestIdOf, statusOf, statusTone } from "../lib/model.js";
 import { recordParticipants } from "../lib/participants.js";
-import { ParticipantsInline, ParticipantsLegend, participantsSummary } from "../components/Participants.jsx";
+import { ParticipantsInline, ParticipantsLegend, SituationBadge, participantsSummary, participantsTone } from "../components/Participants.jsx";
 import { navigate } from "../lib/router.js";
 import { useData } from "../lib/store.jsx";
 import { NeedsConnection, StatusChips, StatusLegend, withDateRenderers } from "./RequestsView.jsx";
@@ -27,7 +27,7 @@ export default function RecordsView() {
           return {
             status: statusOf(it),
             participants,
-            situation: participants ? participantsSummary(participants, t) : "…",
+            situation: participants ? participantsSummary(participants, t, { short: true }) : "…",
             msb: holderForRecord(it, request, catalog.dataHolders) ?? (request ? "" : "…"),
             deliveryPoint: recordDeliveryPointOf(it) || "-",
             measurands: Array.isArray(it.measurands) ? it.measurands.map((m) => m.measurandCode).filter(Boolean).join(", ") : "",
@@ -81,13 +81,13 @@ export default function RecordsView() {
           <DataTable
             items={items}
             rowKey={recordIdOf}
-            preferredColumns={["participants", "situation", "deliveryPoint", "msb", "measurands", "purpose", "start", "end", "terminatedOn", "lastChange", "status"]}
-            hiddenColumns={["id", "permissionRequestId"]}
+            preferredColumns={["participants", "situation", "deliveryPoint", "msb", "measurands", "purpose", "start", "end", "terminatedOn", "lastChange"]}
+            hiddenColumns={["id", "permissionRequestId", "status"]}
             defaultSort={{ key: "lastChange", dir: -1 }}
             columnLabels={{
               status: t("Status"),
               participants: t("Participants"),
-              situation: t("Situation"),
+              situation: t("Status"),
               msb: t("Metering Point Operator"),
               deliveryPoint: t("Delivery Point"),
               measurands: t("Measuring Products"),
@@ -102,8 +102,9 @@ export default function RecordsView() {
             cellRenderers={{
               ...withDateRenderers(items),
               participants: (_, row) => (row.participants ? <ParticipantsInline info={row.participants} /> : "…"),
+              situation: (_, row) => <SituationBadge info={row.participants} text={row.situation} />,
             }}
-            rowClassName={(it) => `row--${statusTone(statusOf(it))}`}
+            rowClassName={(it) => `row--${it.participants ? participantsTone(it.participants) : statusTone(statusOf(it))}`}
             onRowClick={(it) => recordIdOf(it) && navigate("records", recordIdOf(it))}
           />
         )}

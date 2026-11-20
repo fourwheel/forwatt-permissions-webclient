@@ -70,8 +70,8 @@ For deploying this to a CloudPanel-managed vServer, see [DEPLOY.md](DEPLOY.md).
      with status filters, search and sorting; click an entry to open its
      detail page.
    - Detail pages offer the available actions: **Reject** a request,
-     **Terminate** a record, and **Duplicate & edit** (the API cannot
-     edit a request, so this prefills a new one).
+     **Revoke** a record, and **Use as template** (the API cannot edit
+     a request, so this prefills a new one).
    - **New Request** - create a permission request.
 3. The language (German / English) is switched with the flags at the
    bottom left of the sidebar; it defaults to the browser language.

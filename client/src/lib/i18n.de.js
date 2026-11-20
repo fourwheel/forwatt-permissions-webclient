@@ -101,7 +101,7 @@ export default {
 
   // --- Statuses
   Created: "Erstellt",
-  "Waiting for MPO approval": "Wartet auf MSB-Freigabe",
+  "Waiting for MPO": "Wartet auf MSB",
   Approved: "Genehmigt",
   Rejected: "Abgelehnt",
   Expired: "Abgelaufen",
@@ -109,8 +109,8 @@ export default {
   Inactive: "Inaktiv",
   Revoked: "Widerrufen",
   Terminated: "Beendet",
-  "Created → Waiting for MPO approval → Approved | Rejected | Expired":
-    "Erstellt → Wartet auf MSB-Freigabe → Genehmigt | Abgelehnt | Abgelaufen",
+  "Waiting for grid user → Waiting for MPO → Approved | Rejected | Expired":
+    "Wartet auf Anschlussnutzer → Wartet auf MSB → Genehmigt | Abgelehnt | Abgelaufen",
   "Next step: {who}.": "Nächster Schritt: {who}.",
   "The current date is after the start and before the end date.": "Das heutige Datum liegt zwischen Start- und Enddatum.",
   "The current date is before the start date (or after the end date).":
@@ -136,7 +136,7 @@ export default {
   "open record": "Record öffnen",
   "All permission requests": "Alle Permission Requests",
   "Permission Request": "Permission Request",
-  "Duplicate & edit": "Duplizieren & bearbeiten",
+  "Use as template": "Als Vorlage nutzen",
   "Reject (cancel) this request": "Diesen Request ablehnen (stornieren)",
   "Not possible - the request is already {status}": "Nicht möglich – der Request ist bereits: {status}",
   "Reject / cancel": "Ablehnen / stornieren",
@@ -153,8 +153,8 @@ export default {
   "since {date}": "seit {date}",
   "Reject permission request?": "Permission Request ablehnen?",
   "Reject request": "Request ablehnen",
-  'The for.Watt API does not allow editing a request - to change it, use "Duplicate & edit" to create a new one.':
-    "Die for.Watt API erlaubt kein Bearbeiten von Requests – nutze „Duplizieren & bearbeiten“, um einen neuen anzulegen.",
+  'The for.Watt API does not allow editing a request - to change it, use "Use as template" to create a new one.':
+    "Die for.Watt API erlaubt kein Bearbeiten von Requests – nutze „Als Vorlage nutzen“, um einen neuen anzulegen.",
   "Permission request rejected.": "Permission Request abgelehnt.",
 
   // --- Record list / detail
@@ -182,9 +182,9 @@ export default {
   "Permission record revoked.": "Permission Record widerrufen.",
 
   // --- New request / form
-  "Duplicate & edit request": "Request duplizieren & bearbeiten",
+  "New request from template": "Neuer Request aus Vorlage",
   "New permission request": "Neuer Permission Request",
-  "Prefilled from": "Vorausgefüllt aus",
+  "Template:": "Vorlage:",
   "Creating it does not change the original - reject it afterwards if it is no longer needed.":
     "Das Original bleibt unverändert – lehne es danach ab, falls es nicht mehr gebraucht wird.",
   "Request details": "Request-Details",
@@ -360,7 +360,8 @@ export default {
   MPO: "MSB",
 
   // --- Dashboard tiles
-  "waiting for the grid user's consent": "wartet auf Zustimmung des Anschlussnutzers",
+  "Waiting for grid user": "Wartet auf Anschlussnutzer",
+  "request created, grid user has not agreed yet": "Request erstellt, Anschlussnutzer hat noch nicht zugestimmt",
   "grid user agreed, metering point operator validates": "Anschlussnutzer hat zugestimmt, MSB prüft",
   "validated by the metering point operator": "vom Messstellenbetreiber bestätigt",
   "by the provider, grid user or metering point operator": "durch ESA, Anschlussnutzer oder MSB",
@@ -382,6 +383,67 @@ export default {
   "{n} revoked": "{n} widerrufen",
   "{n} not started yet": "{n} noch nicht gestartet",
   "{n} ended": "{n} beendet",
+
+  Ready: "Bereit",
+
+  // --- New request (guided form)
+  "Permission request created.": "Permission Request angelegt.",
+  "Four short steps. Measuring products and metering point operators can be searched by typing.": "Vier kurze Schritte. Messprodukte und Messstellenbetreiber lassen sich per Eingabe durchsuchen.",
+  "Measuring product {n}": "Messprodukt {n}",
+  "Which data do you need?": "Welche Daten brauchst du?",
+  "needs a {type}": "benötigt eine {type}",
+  "consumption": "Verbrauch",
+  "feed-in": "Einspeisung",
+  "I already know the delivery point": "Ich kenne die Lieferstelle bereits",
+  "Otherwise the grid user fills in MaLo/MeLo, address and metering point operator when granting the permission.": "Sonst ergänzt der Anschlussnutzer MaLo/MeLo, Adresse und Messstellenbetreiber, wenn er die Berechtigung erteilt.",
+  "{type} number": "{type}-Nummer",
+  "MaLo/MeLo number": "MaLo-/MeLo-Nummer",
+  "11 digits": "11 Ziffern",
+  "33 characters, starts with DE": "33 Zeichen, beginnt mit DE",
+  "Country": "Land",
+  "Permission request created": "Permission Request angelegt",
+  "Send this link to the grid user. They complete the request, check the details and grant the permission:": "Schicke diesen Link an den Anschlussnutzer. Dort vervollständigt und prüft er die Angaben und erteilt die Berechtigung:",
+  "Copy link": "Link kopieren",
+  "The link is not clickable on purpose - it is meant for the grid user.":
+    "Der Link ist bewusst nicht anklickbar – er ist für den Anschlussnutzer bestimmt.",
+  "To the permission requests": "Zu den Permission Requests",
+  "View the new request": "Neuen Request ansehen",
+  "Create another request": "Weiteren Request anlegen",
+  "Purpose described": "Zweck beschrieben",
+  "Service ID entered": "Service-ID eingetragen",
+  "Start date today or later": "Startdatum heute oder später",
+  "End date after the start date": "Enddatum nach dem Startdatum",
+  "Data period within the permission period": "Datenzeitraum innerhalb des Berechtigungszeitraums",
+  "Measuring product selected": "Messprodukt ausgewählt",
+  "Delivery point details complete": "Angaben zur Lieferstelle vollständig",
+  "What is the permission for?": "Wofür ist die Berechtigung?",
+  "The grid user sees this when granting the permission.": "Das sieht der Anschlussnutzer, wenn er die Berechtigung erteilt.",
+  "Describe the purpose": "Zweck beschreiben",
+  "recommended": "empfohlen",
+  "Use an existing service ID": "Bestehende Service-ID verwenden",
+  "Short and understandable, e.g. \"Optimisation of your heat pump\".": "Kurz und verständlich, z. B. „Optimierung Ihrer Wärmepumpe“.",
+  "Service ID": "Service-ID",
+  "Only if your service is registered with for.Watt.": "Nur wenn euer Dienst bei for.Watt registriert ist.",
+  "For which period?": "Für welchen Zeitraum?",
+  "You may access the data during this period. Full days only.": "In diesem Zeitraum darfst du auf die Daten zugreifen. Nur ganze Tage.",
+  "No end date - unlimited": "Kein Enddatum – unbefristet",
+  "Quick select:": "Schnellwahl:",
+  "1 year": "1 Jahr",
+  "2 years": "2 Jahre",
+  "Unlimited": "Unbefristet",
+  "Limit which dates of data may be shared": "Einschränken, aus welchem Zeitraum Daten geteilt werden",
+  "Optional, e.g. for historical analyses. By default the data period equals the permission period.": "Optional, z. B. für historische Auswertungen. Standardmäßig entspricht der Datenzeitraum dem Berechtigungszeitraum.",
+  "Data from": "Daten ab",
+  "Data until": "Daten bis",
+  "Which measuring products?": "Welche Messprodukte?",
+  "One entry per measuring product and delivery point. A permission record is created for each delivery point.": "Ein Eintrag pro Messprodukt und Lieferstelle. Für jede Lieferstelle entsteht später ein Permission Record.",
+  "Add another measuring product": "Weiteres Messprodukt hinzufügen",
+  "Check and send": "Prüfen und absenden",
+  "You request a permission from the grid user for {n} measuring product(s), from {start} {until}.": "Du fragst beim Anschlussnutzer eine Berechtigung für {n} Messprodukt(e) an, ab {start} {until}.",
+  "until {date}": "bis {date}",
+  "without end date": "ohne Enddatum",
+  "Please complete the open points above.": "Bitte ergänze die offenen Punkte oben.",
+  "The request could not be created:": "Der Request konnte nicht angelegt werden:",
 
   // --- Navigation groups
   Operations: "Operativ",

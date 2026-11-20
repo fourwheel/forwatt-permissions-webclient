@@ -3,14 +3,15 @@
 export const REQUEST_STATUSES = [
   {
     id: "created",
-    label: "Created",
-    hint: "waiting for the grid user's consent",
+    // API status "created" - shown by what it means for the user.
+    label: "Waiting for grid user",
+    hint: "request created, grid user has not agreed yet",
     description: "The energy service provider created the request. Waiting for the grid user to provide information and grant permission.",
     next: "Grid user",
   },
   {
     id: "waitingForApproval",
-    label: "Waiting for MPO approval",
+    label: "Waiting for MPO",
     hint: "grid user agreed, metering point operator validates",
     description:
       "The grid user granted permission (with or without modifying the provider's data). Waiting for the metering point operator to validate it.",

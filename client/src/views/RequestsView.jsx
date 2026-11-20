@@ -19,7 +19,7 @@ import { href, navigate } from "../lib/router.js";
 import { REQUEST_STATUSES, requestStatusInfo, statusLabel } from "../lib/status.js";
 import { useI18n } from "../lib/i18n.jsx";
 import { requestParticipants } from "../lib/participants.js";
-import { ParticipantsInline, ParticipantsLegend, participantsSummary } from "../components/Participants.jsx";
+import { ParticipantsInline, ParticipantsLegend, SituationBadge, participantsSummary, participantsTone } from "../components/Participants.jsx";
 import { useData } from "../lib/store.jsx";
 
 const REQUEST_STATES = REQUEST_STATUSES.map((x) => x.id);
@@ -164,7 +164,7 @@ export default function RequestsView() {
           return {
             status: statusOf(it),
             participants,
-            situation: participants ? participantsSummary(participants, t) : "…",
+            situation: participants ? participantsSummary(participants, t, { short: true }) : "…",
             purpose: pick(d, ["permissionRequestPurpose", "purpose"]) ?? (d ? "" : "…"),
             deliveryPoints: d ? requestDeliveryPointsOf(d).join(", ") : "…",
             msb: d ? requestHoldersOf(d, catalog.dataHolders).join(", ") : "…",
@@ -204,7 +204,7 @@ export default function RequestsView() {
       <div className="card">
         <StatusChips items={requests.items} states={REQUEST_STATES} value={status} onChange={setStatus} />
         <ParticipantsLegend />
-        <StatusLegend statuses={REQUEST_STATUSES} flow={t("Created → Waiting for MPO approval → Approved | Rejected | Expired")} />
+        <StatusLegend statuses={REQUEST_STATUSES} flow={t("Waiting for grid user → Waiting for MPO → Approved | Rejected | Expired")} />
         {requests.loading && requests.items.length === 0 ? (
           <p className="field__help">{t("Loading permission requests...")}</p>
         ) : requests.items.length === 0 ? (
@@ -215,13 +215,13 @@ export default function RequestsView() {
           <DataTable
             items={items}
             rowKey={requestIdOf}
-            preferredColumns={["participants", "situation", "purpose", "records", "msb", "deliveryPoints", "lastChange", "status"]}
-            hiddenColumns={["permissionRequestId"]}
+            preferredColumns={["participants", "situation", "purpose", "records", "msb", "deliveryPoints", "lastChange"]}
+            hiddenColumns={["permissionRequestId", "status"]}
             defaultSort={{ key: "lastChange", dir: -1 }}
             columnLabels={{
               status: t("Status"),
               participants: t("Participants"),
-              situation: t("Situation"),
+              situation: t("Status"),
               purpose: t("Purpose"),
               records: t("Permission Records"),
               msb: t("Metering Point Operator"),
@@ -233,8 +233,9 @@ export default function RequestsView() {
               ...withDateRenderers(items),
               records: (_, row) => <RecordChips records={row.records} />,
               participants: (_, row) => (row.participants ? <ParticipantsInline info={row.participants} /> : "…"),
+              situation: (_, row) => <SituationBadge info={row.participants} text={row.situation} />,
             }}
-            rowClassName={(it) => `row--${statusTone(statusOf(it))}`}
+            rowClassName={(it) => `row--${it.participants ? participantsTone(it.participants) : statusTone(statusOf(it))}`}
             onRowClick={(it) => requestIdOf(it) && navigate("requests", requestIdOf(it))}
           />
         )}

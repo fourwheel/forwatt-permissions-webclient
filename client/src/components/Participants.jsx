@@ -94,10 +94,33 @@ export function ParticipantsInline({ info }) {
   );
 }
 
+/** Color of the overall situation: ok (ready/agreed), warn (waiting), err (rejected/revoked), muted (expired/ended). */
+export function participantsTone(info) {
+  if (!info) return "muted";
+  const states = ROLES.map((r) => info.parts[r].state);
+  if (info.waitingFor) return "warn";
+  if (states.some((s) => s === "rejected" || s === "revoked")) return "err";
+  if (states.some((s) => s === "expired") || states.every((s) => s === "ended")) return "muted";
+  if (info.notStarted) return "neutral";
+  return "ok";
+}
+
+/** The situation as a colored badge (same look as the status badges). */
+export function SituationBadge({ info, text }) {
+  const { t } = useI18n();
+  if (!info) return <span className="status status--muted">…</span>;
+  // Lists show the short form; the full sentence is in the tooltip.
+  return (
+    <span className={`status status--${participantsTone(info)}`} title={participantsSummary(info, t)}>
+      {text}
+    </span>
+  );
+}
+
 /** One-line summary: "Waiting for MSB", "Ready", "Revoked by data owner", ... */
-export function participantsSummary(info, t) {
+export function participantsSummary(info, t, { short = false } = {}) {
   if (!info) return "";
-  if (info.ready) return t("Ready – metering data can be transferred to the ESP");
+  if (info.ready) return short ? t("Ready") : t("Ready – metering data can be transferred to the ESP");
   if (info.waitingFor) return t("Waiting for {who}", { who: t(ROLE_LABELS[info.waitingFor]) });
   const states = ROLES.map((r) => info.parts[r].state);
   if (states.includes("revoked")) return t("Revoked by {who}", { who: t(ROLE_LABELS[info.actor] ?? "unknown") });

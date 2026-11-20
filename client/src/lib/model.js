@@ -151,9 +151,13 @@ export function toPrefill(request) {
   return {
     start,
     end: asDate(pick(request, ["end", "endDate"])),
-    // A data start before the new start date would be stale - let it default.
-    dataStart: dataStart && dataStart >= start ? dataStart : "",
-    dataEnd: asDate(pick(request, ["dataEnd"])),
+    // The API fills the data period with the permission period by default;
+    // only keep it if it was really limited (and is not stale).
+    dataStart: dataStart && dataStart !== origStart && dataStart >= start ? dataStart : "",
+    dataEnd: (() => {
+      const dataEnd = asDate(pick(request, ["dataEnd"]));
+      return dataEnd && dataEnd !== asDate(pick(request, ["end", "endDate"])) ? dataEnd : "";
+    })(),
     // The API returns both, but a new request takes exactly one of them.
     serviceId: purpose ? "" : pick(request, ["serviceId", "service.id"]) ?? "",
     purpose,

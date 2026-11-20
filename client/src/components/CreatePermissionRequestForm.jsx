@@ -9,9 +9,9 @@ import { useApiCall } from "../useApiCall.js";
 import ResponseView from "./ResponseView.jsx";
 
 // Local date as YYYY-MM-DD, the format of <input type="date">.
-const todayIso = () => new Date().toLocaleDateString("sv-SE");
+export const todayIso = () => new Date().toLocaleDateString("sv-SE");
 
-const emptyMeasurand = {
+export const emptyMeasurand = {
   measurandCapabilityCode: "",
   useDeliveryPoint: false,
   codeValue: "",
@@ -22,7 +22,7 @@ const emptyMeasurand = {
 // The API only accepts Malo/Melo, address and data holder together - all
 // three or none. The data holder is identified either by BDEW code alone
 // or by Id (with role type MPO), never by both.
-function measurandProblems(m, index, t) {
+export function measurandProblems(m, index, t) {
   const label = t("Measurand request {n}", { n: index + 1 });
   const problems = [];
   if (!m.measurandCapabilityCode) problems.push(`${label}: ${t("a measuring product is required.")}`);
@@ -36,7 +36,7 @@ function measurandProblems(m, index, t) {
   return problems;
 }
 
-function toRequestedInformation(m) {
+export function toRequestedInformation(m) {
   if (!m.useDeliveryPoint) {
     return { measurandCapabilityCode: m.measurandCapabilityCode, codeValue: null, deliveryPointAddress: null, dataHolder: null };
   }
@@ -52,7 +52,7 @@ function toRequestedInformation(m) {
 
 // Dropdown of the measurand capabilities offered by for.Watt. Falls back
 // to a text field if the list could not be loaded.
-function MeasurandSelect({ value, onChange, options }) {
+export function MeasurandSelect({ value, onChange, options, showProperties = true }) {
   const { t } = useI18n();
   if (options.length === 0) {
     return (
@@ -78,7 +78,7 @@ function MeasurandSelect({ value, onChange, options }) {
         placeholder={t("Type to search measuring products...")}
         ariaLabel={t("Measuring product")}
       />
-      {selected && (
+      {selected && showProperties && (
         <div className="measurand-props">
           <div className="measurand-props__title">{t("Properties of {name}", { name: selected.label })}</div>
           <KeyValue data={selected.raw} />
@@ -90,7 +90,7 @@ function MeasurandSelect({ value, onChange, options }) {
 
 // Dropdown of the active data holders (MSB). Selecting one sets its Id;
 // a BDEW code from a duplicated request is matched to the list.
-function DataHolderSelect({ dataHolder, onChange, options }) {
+export function DataHolderSelect({ dataHolder, onChange, options }) {
   const { t } = useI18n();
   const selected =
     dataHolder.Id ||
@@ -117,7 +117,7 @@ function DataHolderSelect({ dataHolder, onChange, options }) {
 }
 
 // Format check: a MaLo is 11 digits, a MeLo is 33 characters starting with "DE".
-function codeTypeOf(code) {
+export function codeTypeOf(code) {
   const c = String(code ?? "").trim();
   if (/^\d{11}$/.test(c)) return "malo";
   if (/^DE[0-9A-Z]{31}$/i.test(c)) return "melo";

@@ -1,3 +1,4 @@
+import { CopyButton } from "./ui.jsx";
 import { useI18n } from "../lib/i18n.jsx";
 export default function ResponseView({ state }) {
   const { t } = useI18n();
@@ -23,10 +24,9 @@ export default function ResponseView({ state }) {
     <div className={`response ${result.ok ? "response--ok" : "response--error"}`}>
       <div className="response__status">HTTP {result.status}</div>
       {typeof result.data === "string" && /^https?:\/\/\S+$/.test(result.data) ? (
-        <p>
-          <a href={result.data} target="_blank" rel="noreferrer">
-            {result.data}
-          </a>
+        // Not clickable on purpose (completion link for the grid user).
+        <p className="link-row">
+          <code className="link-text">{result.data}</code> <CopyButton value={result.data} label={t("Copy link")} />
         </p>
       ) : result.data === null || result.data === "" ? (
         <p>{t("(empty response body)")}</p>
