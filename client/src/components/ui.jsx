@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
-import { formatDate, statusTone } from "../lib/model.js";
+import { useI18n } from "../lib/i18n.jsx";
+import { ACTOR_ROLES, formatDate, statusTone } from "../lib/model.js";
+import { statusLabel } from "../lib/status.js";
 
 export function StatusBadge({ status }) {
-  if (!status) return <span className="status status--muted">unknown</span>;
-  return <span className={`status status--${statusTone(status)}`}>{String(status)}</span>;
+  const { t } = useI18n();
+  if (!status) return <span className="status status--muted">{t("unknown")}</span>;
+  return <span className={`status status--${statusTone(status)}`}>{t(statusLabel(status))}</span>;
 }
 
-export function CopyButton({ value, label = "Copy" }) {
+export function CopyButton({ value, label }) {
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
   return (
     <button
@@ -23,13 +27,14 @@ export function CopyButton({ value, label = "Copy" }) {
         }
       }}
     >
-      {copied ? "Copied" : label}
+      {copied ? t("Copied") : label ?? t("Copy")}
     </button>
   );
 }
 
 // Confirmation dialog for destructive actions.
 export function ConfirmDialog({ open, title, children, confirmLabel, onConfirm, onCancel, busy }) {
+  const { t } = useI18n();
   const [checked, setChecked] = useState(false);
   useEffect(() => {
     if (!open) setChecked(false);
@@ -45,14 +50,14 @@ export function ConfirmDialog({ open, title, children, confirmLabel, onConfirm, 
         <div className="modal__body">{children}</div>
         <label className="confirm-row">
           <input type="checkbox" checked={checked} onChange={(e) => setChecked(e.target.checked)} />
-          I understand that this cannot be undone.
+          {t("I understand that this cannot be undone.")}
         </label>
         <div className="button-row button-row--end">
           <button type="button" className="btn btn--ghost" onClick={onCancel} disabled={busy}>
-            Cancel
+            {t("Cancel")}
           </button>
           <button type="button" className="btn btn--danger" onClick={onConfirm} disabled={!checked || busy}>
-            {busy ? "Working..." : confirmLabel}
+            {busy ? t("Working...") : confirmLabel}
           </button>
         </div>
       </div>
@@ -70,7 +75,7 @@ export function KeyValue({ data, depth = 0 }) {
   if (data === null || data === undefined) return <span className="kv__empty">-</span>;
   if (typeof data !== "object") return <span>{String(data)}</span>;
   if (Array.isArray(data)) {
-    if (data.length === 0) return <span className="kv__empty">(none)</span>;
+    if (data.length === 0) return <span className="kv__empty">-</span>;
     if (data.every((v) => v === null || typeof v !== "object")) return <span>{data.join(", ")}</span>;
     return (
       <div className="kv-array">
@@ -84,7 +89,7 @@ export function KeyValue({ data, depth = 0 }) {
     );
   }
   const entries = Object.entries(data);
-  if (entries.length === 0) return <span className="kv__empty">(empty)</span>;
+  if (entries.length === 0) return <span className="kv__empty">-</span>;
   return (
     <dl className={`kv ${depth > 0 ? "kv--nested" : ""}`}>
       {entries.map(([k, v]) => (
@@ -103,5 +108,17 @@ export function EmptyState({ title, children }) {
       <strong>{title}</strong>
       {children && <div>{children}</div>}
     </div>
+  );
+}
+
+// "ESA · node.energy GmbH" with a role badge.
+export function ActorLabel({ actor }) {
+  const { t } = useI18n();
+  if (!actor) return null;
+  return (
+    <span className="actor">
+      <span className={`actor__role actor__role--${actor.role}`}>{t(ACTOR_ROLES[actor.role])}</span>
+      {actor.name && <span className="actor__name">{actor.name}</span>}
+    </span>
   );
 }

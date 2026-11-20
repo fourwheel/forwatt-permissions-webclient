@@ -73,7 +73,12 @@ For deploying this to a CloudPanel-managed vServer, see [DEPLOY.md](DEPLOY.md).
      **Terminate** a record, and **Duplicate & edit** (the API cannot
      edit a request, so this prefills a new one).
    - **New Request** - create a permission request.
-3. **API Explorer** keeps the original endpoint-by-endpoint forms
+3. The language (German / English) is switched with the flags at the
+   bottom left of the sidebar; it defaults to the browser language.
+4. **About**, **Imprint** and **Privacy policy** are linked in the footer.
+   Fill in the operator details (address, e-mail, log retention, hoster)
+   in `client/src/views/InfoPages.jsx` (`OPERATOR`) before publishing.
+5. **API Explorer** keeps the original endpoint-by-endpoint forms
    (Prerequisites, Permission Requests, Permission Records) showing the
    raw HTTP status and JSON.
 

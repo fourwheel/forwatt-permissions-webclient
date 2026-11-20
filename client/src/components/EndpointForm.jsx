@@ -1,3 +1,4 @@
+import { useI18n } from "../lib/i18n.jsx";
 import { useState } from "react";
 import { callForwatt } from "../api.js";
 import { useApiCall } from "../useApiCall.js";
@@ -39,6 +40,7 @@ export default function EndpointForm({
   auth,
   danger,
 }) {
+  const { t } = useI18n();
   const [values, setValues] = useState({});
   const [confirmed, setConfirmed] = useState(false);
   const [state, run] = useApiCall(async () => {
@@ -53,8 +55,8 @@ export default function EndpointForm({
 
   return (
     <section className="card">
-      <h2>{title}</h2>
-      {description && <p className="card__description">{description}</p>}
+      <h2>{t(title)}</h2>
+      {description && <p className="card__description">{t(description)}</p>}
       <div className="method-line">
         <span className={`method method--${method.toLowerCase()}`}>{method}</span>
         <code>{pathTemplate}</code>
@@ -69,7 +71,7 @@ export default function EndpointForm({
         {fields.map((field) => (
           <div className="field" key={field.name}>
             <label htmlFor={field.name}>
-              {field.label}
+              {t(field.label)}
               {field.required && <span className="required">*</span>}
             </label>
             {field.type === "select" ? (
@@ -78,7 +80,7 @@ export default function EndpointForm({
                 value={values[field.name] ?? ""}
                 onChange={(e) => setField(field.name, e.target.value)}
               >
-                <option value="">-- please select --</option>
+                <option value="">{t("-- please select --")}</option>
                 {field.options.map((opt) => (
                   <option key={opt} value={opt}>
                     {opt}
@@ -101,19 +103,19 @@ export default function EndpointForm({
                 onChange={(e) => setField(field.name, e.target.value)}
               />
             )}
-            {field.help && <p className="field__help">{field.help}</p>}
+            {field.help && <p className="field__help">{t(field.help)}</p>}
           </div>
         ))}
 
         {danger && (
           <label className="confirm-row">
             <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} />
-            I confirm that I really want to perform this action.
+            {t("I confirm that I really want to perform this action.")}
           </label>
         )}
 
         <button type="submit" disabled={missingRequired || (danger && !confirmed) || state.loading}>
-          {state.loading ? "Sending..." : "Send"}
+          {state.loading ? t("Sending...") : t("Send")}
         </button>
       </form>
 

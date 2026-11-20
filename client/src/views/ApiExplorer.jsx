@@ -1,3 +1,4 @@
+import { useI18n } from "../lib/i18n.jsx";
 import EndpointForm from "../components/EndpointForm.jsx";
 import PermissionRequestFlow from "../components/PermissionRequestFlow.jsx";
 import { href } from "../lib/router.js";
@@ -10,19 +11,20 @@ const TABS = [
 
 // The original endpoint-by-endpoint forms, unchanged.
 export default function ApiExplorer({ auth, sub: rawSub }) {
-  const sub = TABS.some((t) => t.id === rawSub) ? rawSub : TABS[0].id;
+  const { t } = useI18n();
+  const sub = TABS.some((tab) => tab.id === rawSub) ? rawSub : TABS[0].id;
   return (
     <div className="explorer">
       <div className="page-head">
         <div>
-          <h1>API Explorer</h1>
-          <p className="page-head__sub">Call each for.Watt endpoint directly and see the raw response.</p>
+          <h1>{t("API Explorer")}</h1>
+          <p className="page-head__sub">{t("Call each for.Watt endpoint directly and see the raw response.")}</p>
         </div>
       </div>
       <nav className="tabs">
-        {TABS.map((t) => (
-          <a key={t.id} href={href("explorer", t.id)} className={`tab ${sub === t.id ? "tab--active" : ""}`}>
-            {t.label}
+        {TABS.map((tab) => (
+          <a key={tab.id} href={href("explorer", tab.id)} className={`tab ${sub === tab.id ? "tab--active" : ""}`}>
+            {t(tab.label)}
           </a>
         ))}
       </nav>

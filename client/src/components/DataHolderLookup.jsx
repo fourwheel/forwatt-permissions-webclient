@@ -1,3 +1,4 @@
+import { useI18n } from "../lib/i18n.jsx";
 import { useState } from "react";
 import { callForwatt } from "../api.js";
 import { useApiCall } from "../useApiCall.js";
@@ -22,6 +23,7 @@ function findByBdewCode(list, code) {
 }
 
 export default function DataHolderLookup({ auth, onResult }) {
+  const { t } = useI18n();
   const [code, setCode] = useState("");
   const [state, run] = useApiCall(() =>
     callForwatt({ path: "v2/active-dataholders", method: "GET", token: auth.token, apiBaseUrl: auth.apiBaseUrl })
@@ -40,22 +42,23 @@ export default function DataHolderLookup({ auth, onResult }) {
 
   return (
     <section className="card">
-      <h2>Is the data holder on board?</h2>
+      <h2>{t("Is the data holder on board?")}</h2>
       <p className="card__description">
-        Checks whether the target data holder (MSB) is listed in "Active Data Holders" and therefore
-        reachable via the for.Watt API. If not, this MSB requires a manual (e-mail based) request
-        instead.
+        {t('Checks whether the target data holder (MSB) is listed in "Active Data Holders" and therefore reachable via the for.Watt API. If not, this MSB requires a manual (e-mail based) request instead.')}
       </p>
       <form onSubmit={check} className="lookup-form">
         <div className="field">
-          <label>BDEW code of the target data holder<span className="required">*</span></label>
+          <label>
+            {t("BDEW code of the target data holder")}
+            <span className="required">*</span>
+          </label>
           <input name="dataHolderLookupCode" autoComplete="on" value={code} onChange={(e) => setCode(e.target.value)} placeholder="9900000000001" />
         </div>
         <button type="submit" disabled={!code || !auth.token || state.loading}>
-          {state.loading ? "Checking..." : "Check"}
+          {state.loading ? t("Checking...") : t("Check")}
         </button>
       </form>
-      {!auth.token && <p className="field__help">Requires an access token (see Connection in the sidebar).</p>}
+      {!auth.token && <p className="field__help">{t("Requires an access token (see Connection in the sidebar).")}</p>}
       {(state.error || (state.result && !state.result.ok)) && <ResponseView state={state} />}
     </section>
   );

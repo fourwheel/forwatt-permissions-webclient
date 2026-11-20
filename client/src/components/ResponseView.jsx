@@ -1,16 +1,18 @@
+import { useI18n } from "../lib/i18n.jsx";
 export default function ResponseView({ state }) {
+  const { t } = useI18n();
   if (!state) return null;
 
   const { loading, error, result } = state;
 
   if (loading) {
-    return <div className="response response--loading">Request in progress...</div>;
+    return <div className="response response--loading">{t("Request in progress...")}</div>;
   }
 
   if (error) {
     return (
       <div className="response response--error">
-        <strong>Error:</strong> {error}
+        <strong>{t("Error:")}</strong> {error}
       </div>
     );
   }
@@ -27,7 +29,7 @@ export default function ResponseView({ state }) {
           </a>
         </p>
       ) : result.data === null || result.data === "" ? (
-        <p>(empty response body)</p>
+        <p>{t("(empty response body)")}</p>
       ) : (
         <pre>{typeof result.data === "string" ? result.data : JSON.stringify(result.data, null, 2)}</pre>
       )}

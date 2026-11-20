@@ -1,31 +1,89 @@
 import { useCallback, useEffect, useState } from "react";
-import { ConfirmDialog, CopyButton, KeyValue, StatusBadge } from "../components/ui.jsx";
+import { ActorLabel, ConfirmDialog, CopyButton, KeyValue, StatusBadge } from "../components/ui.jsx";
 import {
   errorText,
   extractList,
   formatDate,
+  MEASURAND_REQUEST_KEYS,
+  actorOf,
+  holderForRecord,
+  recordDeliveryPointOf,
   pick,
   recordIdOf,
+  requestDeliveryPointsOf,
+  requestHoldersOf,
   requestIdOf,
   statusOf,
   statusTone,
   toPrefill,
 } from "../lib/model.js";
 import { href, navigate } from "../lib/router.js";
+import { REQUEST_STATUSES, canRejectRequest, requestStatusInfo, statusLabel } from "../lib/status.js";
 import { useData } from "../lib/store.jsx";
+import { useI18n } from "../lib/i18n.jsx";
+import { requestParticipants } from "../lib/participants.js";
+import { ParticipantsPanel } from "../components/Participants.jsx";
 import { NeedsConnection } from "./RequestsView.jsx";
 
 export function Fact({ label, children }) {
   return (
     <div className="fact">
       <div className="fact__label">{label}</div>
-      <div className="fact__value">{children || <span className="kv__empty">-</span>}</div>
+      <div className="fact__value">{children === null || children === undefined || children === "" ? <span className="kv__empty">-</span> : children}</div>
+    </div>
+  );
+}
+
+// Lifecycle bar: Created -> Waiting for approval -> one of the final states.
+function Lifecycle({ status }) {
+  const { t } = useI18n();
+  const info = requestStatusInfo(status);
+  const order = ["created", "waitingForApproval"];
+  const reached = (id) => {
+    if (!info) return false;
+    if (info.id === id || info.final) return true;
+    return order.indexOf(id) < order.indexOf(info.id);
+  };
+  return (
+    <div className="card lifecycle">
+      <ol className="lifecycle__steps">
+        {REQUEST_STATUSES.filter((s) => !s.final).map((s) => [
+          <li key={s.id} className={`lifecycle__step ${reached(s.id) ? "is-reached" : ""} ${info?.id === s.id ? "is-current" : ""}`}>
+            {t(s.label)}
+          </li>,
+          <li key={`${s.id}-arrow`} className="lifecycle__arrow" aria-hidden>
+            →
+          </li>,
+        ])}
+        <li className="lifecycle__finals">
+          {REQUEST_STATUSES.filter((s) => s.final).map((s) => (
+            <span
+              key={s.id}
+              className={`lifecycle__final lifecycle__final--${statusTone(s.id)} ${info?.id === s.id ? "is-current" : ""}`}
+            >
+              {t(s.label)}
+            </span>
+          ))}
+        </li>
+      </ol>
+      {info && (
+        <p className="lifecycle__text">
+          {t(info.description)}
+          {info.next && (
+            <>
+              {" "}
+              <strong>{t("Next step: {who}.", { who: t(info.next) })}</strong>
+            </>
+          )}
+        </p>
+      )}
     </div>
   );
 }
 
 export default function RequestDetail({ id }) {
-  const { auth, api, requests, recordsForRequest, refresh, notify, setDraft } = useData();
+  const { auth, api, requests, recordsForRequest, refresh, notify, setDraft, catalog } = useData();
+  const { t } = useI18n();
   const listItem = requests.items.find((r) => String(requestIdOf(r)) === String(id));
   const [detail, setDetail] = useState({ loading: true, error: null, data: null });
   const [records, setRecords] = useState(null);
@@ -53,7 +111,7 @@ export default function RequestDetail({ id }) {
   const linkedRecords = records ?? recordsForRequest(id);
   const purpose = pick(data, ["permissionRequestPurpose", "purpose"]);
   const serviceId = pick(data, ["serviceId", "service.id"]);
-  const measurands = pick(data, ["measurementRequestedInformation", "measurandRequests", "requestedInformation"]);
+  const measurands = pick(data, MEASURAND_REQUEST_KEYS);
   const completionUrl = pick(data, ["url", "permissionRequestUrl", "redirectUrl", "link"]);
 
   const reject = async () => {
@@ -61,7 +119,7 @@ export default function RequestDetail({ id }) {
     try {
       const res = await api(`v2/permissionrequest/reject/${encodeURIComponent(id)}`, { method: "POST" });
       if (!res.ok) throw new Error(errorText(res));
-      notify("Permission request rejected.");
+      notify(t("Permission request rejected."));
       setConfirm(false);
       await load();
       refresh();
@@ -80,64 +138,85 @@ export default function RequestDetail({ id }) {
   return (
     <div className={`detail-page detail-page--${statusTone(status)}`}>
       <a className="back-link" href={href("requests")}>
-        ← All permission requests
+        ← {t("All permission requests")}
       </a>
       <div className="page-head">
         <div>
-          <div className="page-head__eyebrow">Permission Request</div>
+          <div className="page-head__eyebrow">{t("Permission Request")}</div>
           <h1>{purpose || <code className="mono">{id}</code>}</h1>
           <div className="page-head__meta">
             <StatusBadge status={status} />
             <code className="mono">{id}</code>
-            <CopyButton value={id} label="Copy ID" />
+            <CopyButton value={id} label={t("Copy ID")} />
           </div>
         </div>
         <div className="button-row">
           <button type="button" className="btn btn--ghost" onClick={load} disabled={detail.loading}>
-            {detail.loading ? "Loading..." : "Refresh"}
+            {detail.loading ? t("Loading...") : t("Refresh")}
           </button>
           <button type="button" className="btn btn--ghost" onClick={duplicate} disabled={!data}>
-            Duplicate &amp; edit
+            {t("Duplicate & edit")}
           </button>
           <button
             type="button"
             className="btn btn--danger"
             onClick={() => setConfirm(true)}
-            disabled={String(status).toLowerCase() === "rejected"}
-            title={String(status).toLowerCase() === "rejected" ? "Already rejected" : ""}
+            disabled={!canRejectRequest(status)}
+            title={
+              canRejectRequest(status)
+                ? t("Reject (cancel) this request")
+                : t("Not possible - the request is already {status}", { status: t(statusLabel(status)) })
+            }
           >
-            Reject
+            {t("Reject / cancel")}
           </button>
         </div>
       </div>
 
-      {detail.error && <div className="response response--error">Could not load details: {detail.error}</div>}
+      {detail.error && <div className="response response--error">{t("Could not load details:")} {detail.error}</div>}
+      {listItem && detail.data && statusOf(detail.data) && String(listItem.listedStatus ?? statusOf(listItem)) !== String(statusOf(detail.data)) && (
+        <p className="field__help status-note">
+          {t("Current status from the request itself. The API's status change list still shows this as the latest change:")}{" "}
+          <strong>{t(statusLabel(listItem.listedStatus ?? statusOf(listItem)))}</strong>
+        </p>
+      )}
+
+      <ParticipantsPanel info={requestParticipants(data, listItem, linkedRecords, catalog.dataHolders)} />
+      <Lifecycle status={status} />
 
       <div className="card facts">
-        <Fact label="Status">
+        <Fact label={t("Status")}>
           <StatusBadge status={status} />
         </Fact>
-        <Fact label="Start">{formatDate(pick(data, ["start", "startDate"]))}</Fact>
-        <Fact label="End">{formatDate(pick(data, ["end", "endDate"])) || "no expiry"}</Fact>
-        <Fact label="Data period">
+        <Fact label={t("Start")}>{formatDate(pick(data, ["start", "startDate"]))}</Fact>
+        <Fact label={t("End")}>{formatDate(pick(data, ["end", "endDate"])) || t("no expiry")}</Fact>
+        <Fact label={t("Data period")}>
           {[formatDate(pick(data, ["dataStart"])), formatDate(pick(data, ["dataEnd"]))].filter(Boolean).join(" – ")}
         </Fact>
-        <Fact label={serviceId ? "Service Id" : "Purpose"}>{serviceId || purpose}</Fact>
-        <Fact label="Measurand requests">{Array.isArray(measurands) ? measurands.length : null}</Fact>
-        <Fact label="Permission records">{linkedRecords.length}</Fact>
+        <Fact label={serviceId ? "Service Id" : t("Purpose")}>{serviceId || purpose}</Fact>
+        <Fact label={t("Measurand requests")}>{Array.isArray(measurands) ? measurands.length : null}</Fact>
+        <Fact label={t("Delivery points")}>{requestDeliveryPointsOf(data).join(", ")}</Fact>
+        <Fact label={t("Metering point operators")}>{requestHoldersOf(data, catalog.dataHolders).join(", ")}</Fact>
+        <Fact label={t("Grid user")}>{pick(data, ["dataOwner.name"])}</Fact>
+        <Fact label={t("Permission records")}>{linkedRecords.length}</Fact>
+        {listItem?.actorId && !listItem.listedStatus && (
+          <Fact label={t("Last status change by")}>
+            {actorOf(listItem.actorId, data) ? <ActorLabel actor={actorOf(listItem.actorId, data)} /> : null}
+          </Fact>
+        )}
         {completionUrl && (
-          <Fact label="Completion link">
+          <Fact label={t("Completion link")}>
             <a href={completionUrl} target="_blank" rel="noreferrer">
-              Open
+              {t("Open")}
             </a>
           </Fact>
         )}
       </div>
 
       <div className="card">
-        <h2>Permission Records</h2>
+        <h2>{t("Permission Records")}</h2>
         {linkedRecords.length === 0 ? (
-          <p className="field__help">No permission records for this request (yet).</p>
+          <p className="field__help">{t("No permission records for this request (yet).")}</p>
         ) : (
           <ul className="link-list">
             {linkedRecords.map((r) => {
@@ -146,8 +225,28 @@ export default function RequestDetail({ id }) {
                 <li key={rid} className={`row--${statusTone(statusOf(r))}`}>
                   <a href={href("records", rid)}>
                     <StatusBadge status={statusOf(r)} />
-                    <code className="mono">{rid}</code>
-                    <span className="link-list__extra">{pick(r, ["deliveryPointCodeValue", "deliveryPoint.codeValue", "codeValue"]) ?? ""}</span>
+                    <span>
+                      <strong>{recordDeliveryPointOf(r) || t("no delivery point")}</strong>
+                      <span className="link-list__sub">
+                        {[
+                          holderForRecord(r, data, catalog.dataHolders),
+                          Array.isArray(r.measurands) ? r.measurands.map((m) => m.measurandCode).join(", ") : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </span>
+                    </span>
+                    <span className="link-list__extra">
+                      {r.terminatedOn
+                        ? t("revoked {date}", { date: formatDate(r.terminatedOn) })
+                        : t("since {date}", { date: formatDate(r.start) })}
+                      {r.terminatedOn && actorOf(r.terminatedById, data) && (
+                        <>
+                          {" "}
+                          {t("by")} <ActorLabel actor={actorOf(r.terminatedById, data)} />
+                        </>
+                      )}
+                    </span>
                   </a>
                 </li>
               );
@@ -157,25 +256,27 @@ export default function RequestDetail({ id }) {
       </div>
 
       <div className="card">
-        <h2>Details</h2>
-        {data ? <KeyValue data={data} /> : <p className="field__help">{detail.loading ? "Loading..." : "No data."}</p>}
+        <h2>{t("Details")}</h2>
+        {data ? <KeyValue data={data} /> : <p className="field__help">{detail.loading ? t("Loading...") : t("No data.")}</p>}
         <details className="raw">
-          <summary>Raw JSON</summary>
+          <summary>{t("Raw JSON")}</summary>
           <pre>{JSON.stringify(data, null, 2)}</pre>
         </details>
       </div>
 
       <ConfirmDialog
         open={confirm}
-        title="Reject permission request?"
-        confirmLabel="Reject request"
+        title={t("Reject permission request?")}
+        confirmLabel={t("Reject request")}
         busy={busy}
         onCancel={() => setConfirm(false)}
         onConfirm={reject}
       >
         <p>
-          The permission request <code className="mono">{id}</code> will be rejected. The for.Watt API does not
-          allow editing a request - to change it, use "Duplicate &amp; edit" to create a new one.
+          {t("The permission request will be rejected (cancelled) by you as the energy service provider:")} <code className="mono">{id}</code>
+        </p>
+        <p>
+          {t('The for.Watt API does not allow editing a request - to change it, use "Duplicate & edit" to create a new one.')}
         </p>
       </ConfirmDialog>
     </div>

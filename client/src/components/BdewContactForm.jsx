@@ -1,3 +1,4 @@
+import { useI18n } from "../lib/i18n.jsx";
 import { useMemo, useState } from "react";
 
 function buildBody({ bdewCode, requesterName, requesterBdew, start, end, purpose, meteringPoints, notes }) {
@@ -16,7 +17,10 @@ function buildBody({ bdewCode, requesterName, requesterBdew, start, end, purpose
   return lines.join("\n");
 }
 
+// The e-mail text itself stays in English (it goes to a third party);
+// only the form is translated.
 export default function BdewContactForm({ bdewCode }) {
+  const { t } = useI18n();
   const [recipientEmail, setRecipientEmail] = useState("");
   const [requesterName, setRequesterName] = useState("");
   const [requesterBdew, setRequesterBdew] = useState("");
@@ -44,22 +48,20 @@ export default function BdewContactForm({ bdewCode }) {
 
   return (
     <section className="card">
-      <h2>Not on board - send a manual request</h2>
+      <h2>{t("Not on board - send a manual request")}</h2>
       <p className="card__description">
-        BDEW code {bdewCode} was not found among the active data holders. Look up the contact person for
-        this BDEW code, e.g. via{" "}
+        {t("BDEW code {code} was not found among the active data holders. Look up the contact person for this BDEW code, e.g. via", { code: bdewCode })}{" "}
         <a href="https://bdew-codes.de" target="_blank" rel="noreferrer">
           bdew-codes.de
         </a>
-        , and send the request by e-mail instead. Nothing here is sent or stored automatically - this
-        only prepares a draft that opens in your own mail client (many clients truncate long mailto
-        bodies, so a "Copy text" fallback is provided as well).
+        {t(', and send the request by e-mail instead. Nothing here is sent or stored automatically - this only prepares a draft that opens in your own mail client (many clients truncate long mailto bodies, so a "Copy text" fallback is provided as well).')}
       </p>
 
       <form onSubmit={(e) => e.preventDefault()}>
         <div className="field">
           <label>
-            Recipient e-mail address<span className="required">*</span>
+            {t("Recipient e-mail address")}
+            <span className="required">*</span>
           </label>
           <input
             type="email"
@@ -72,34 +74,36 @@ export default function BdewContactForm({ bdewCode }) {
         </div>
         <div className="field">
           <label>
-            Your company name (ESA/ESP)<span className="required">*</span>
+            {t("Your company name (ESA/ESP)")}
+            <span className="required">*</span>
           </label>
           <input name="requesterName" autoComplete="on" value={requesterName} onChange={(e) => setRequesterName(e.target.value)} />
         </div>
         <div className="field">
-          <label>Your BDEW code (optional)</label>
+          <label>{t("Your BDEW code (optional)")}</label>
           <input name="requesterBdew" autoComplete="on" value={requesterBdew} onChange={(e) => setRequesterBdew(e.target.value)} />
         </div>
         <div className="field">
           <label>
-            Requested period start<span className="required">*</span>
+            {t("Requested period start")}
+            <span className="required">*</span>
           </label>
           <input type="date" value={start} onChange={(e) => setStart(e.target.value)} />
         </div>
         <div className="field">
-          <label>Requested period end (empty = unlimited)</label>
+          <label>{t("Requested period end (empty = unlimited)")}</label>
           <input type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
         </div>
         <div className="field">
-          <label>Metering point(s) (Malo/Melo, comma-separated)</label>
+          <label>{t("Metering point(s) (MaLo/MeLo, comma-separated)")}</label>
           <input name="meteringPoints" autoComplete="on" value={meteringPoints} onChange={(e) => setMeteringPoints(e.target.value)} placeholder="DE00...1, DE00...2" />
         </div>
         <div className="field">
-          <label>Purpose of the request</label>
+          <label>{t("Purpose of the request")}</label>
           <input name="bdewContactPurpose" autoComplete="on" value={purpose} onChange={(e) => setPurpose(e.target.value)} />
         </div>
         <div className="field">
-          <label>Additional notes</label>
+          <label>{t("Additional notes")}</label>
           <textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
 
@@ -111,16 +115,16 @@ export default function BdewContactForm({ bdewCode }) {
               if (!canSend) e.preventDefault();
             }}
           >
-            Open e-mail draft
+            {t("Open e-mail draft")}
           </a>
           <button type="button" onClick={copy} disabled={!requesterName || !start}>
-            {copied ? "Copied!" : "Copy text"}
+            {copied ? t("Copied!") : t("Copy text")}
           </button>
         </div>
       </form>
 
       <div className="response response--neutral">
-        <strong>Preview</strong>
+        <strong>{t("Preview")}</strong>
         <pre>{`To: ${recipientEmail || "-"}\nSubject: ${subject}\n\n${body}`}</pre>
       </div>
     </section>

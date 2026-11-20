@@ -1,19 +1,17 @@
 import { useMemo } from "react";
 import { StatusBadge } from "../components/ui.jsx";
+import { useI18n } from "../lib/i18n.jsx";
 import { dateOf, formatDate, pick, requestIdOf, statusOf, statusTone } from "../lib/model.js";
 import { href } from "../lib/router.js";
+import { REQUEST_STATUSES } from "../lib/status.js";
 import { useData } from "../lib/store.jsx";
+import { requestParticipants } from "../lib/participants.js";
+import { ParticipantsInline, RoleIcon, participantsSummary } from "../components/Participants.jsx";
 import { NeedsConnection } from "./RequestsView.jsx";
 
-const TILES = [
-  { state: "created", label: "Created" },
-  { state: "waitingForApproval", label: "Waiting for approval" },
-  { state: "approved", label: "Approved" },
-  { state: "rejected", label: "Rejected" },
-];
-
 export default function Dashboard() {
-  const { auth, requests, records, refresh } = useData();
+  const { auth, requests, records, refresh, details, catalog, recordsForRequest } = useData();
+  const { t } = useI18n();
 
   const counts = useMemo(() => {
     const c = {};
@@ -29,6 +27,18 @@ export default function Dashboard() {
     [requests.items]
   );
 
+  // Participant state per request (needs the request details).
+  const infoOf = (r) => {
+    const d = details.byId[requestIdOf(r)];
+    return d ? requestParticipants(d, r, recordsForRequest(requestIdOf(r)), catalog.dataHolders) : null;
+  };
+  const infos = requests.items.map(infoOf).filter(Boolean);
+  const waiting = {
+    dataOwner: infos.filter((i) => i.waitingFor === "dataOwner").length,
+    mpo: infos.filter((i) => i.waitingFor === "mpo").length,
+    ready: infos.filter((i) => i.ready).length,
+  };
+
   if (!auth.token) return <NeedsConnection />;
 
   const loading = requests.loading || records.loading;
@@ -37,38 +47,64 @@ export default function Dashboard() {
     <div>
       <div className="page-head">
         <div>
-          <h1>Dashboard</h1>
-          <p className="page-head__sub">Overview of your permission requests and records.</p>
+          <h1>{t("Dashboard")}</h1>
+          <p className="page-head__sub">{t("Overview of your permission requests and records.")}</p>
         </div>
         <div className="button-row">
           <button type="button" className="btn btn--ghost" onClick={refresh} disabled={loading}>
-            {loading ? "Refreshing..." : "Refresh"}
+            {loading ? t("Refreshing...") : t("Refresh")}
           </button>
           <a className="btn" href={href("new")}>
-            + New request
+            + {t("New request")}
           </a>
         </div>
       </div>
 
       {requests.error && <div className="response response--error">{requests.error}</div>}
 
+      <div className="tiles tiles--focus">
+        <a href={href("requests")} className="tile tile--warn">
+          <div className="tile__head">
+            <RoleIcon role="dataOwner" size={22} />
+          </div>
+          <div className="tile__value">{details.loading && !infos.length ? "…" : waiting.dataOwner}</div>
+          <div className="tile__label">{t("Waiting for the grid user")}</div>
+        </a>
+        <a href={href("requests")} className="tile tile--warn">
+          <div className="tile__head">
+            <RoleIcon role="mpo" size={22} />
+          </div>
+          <div className="tile__value">{details.loading && !infos.length ? "…" : waiting.mpo}</div>
+          <div className="tile__label">{t("Waiting for the metering point operator")}</div>
+        </a>
+        <a href={href("records")} className="tile tile--ok">
+          <div className="tile__head">
+            <RoleIcon role="esp" size={22} />
+            <RoleIcon role="dataOwner" size={22} />
+            <RoleIcon role="mpo" size={22} />
+          </div>
+          <div className="tile__value">{details.loading && !infos.length ? "…" : waiting.ready}</div>
+          <div className="tile__label">{t("Ready – all three agreed")}</div>
+        </a>
+      </div>
+
       <div className="tiles">
-        {TILES.map((t) => (
-          <a key={t.state} href={href("requests")} className={`tile tile--${statusTone(t.state)}`}>
-            <div className="tile__value">{loading && !requests.loadedAt ? "…" : counts[t.state] ?? 0}</div>
-            <div className="tile__label">{t.label}</div>
+        {REQUEST_STATUSES.map((s) => (
+          <a key={s.id} href={href("requests")} className={`tile tile--${statusTone(s.id)}`} title={t(s.description)}>
+            <div className="tile__value">{loading && !requests.loadedAt ? "…" : counts[s.id] ?? 0}</div>
+            <div className="tile__label">{t(s.label)}</div>
           </a>
         ))}
         <a href={href("records")} className="tile tile--primary">
           <div className="tile__value">{records.loading && !records.loadedAt ? "…" : records.items.length}</div>
-          <div className="tile__label">Permission records</div>
+          <div className="tile__label">{t("Permission records")}</div>
         </a>
       </div>
 
       <div className="card">
-        <h2>Latest permission requests</h2>
+        <h2>{t("Latest permission requests")}</h2>
         {recent.length === 0 ? (
-          <p className="field__help">{loading ? "Loading..." : "No permission requests yet."}</p>
+          <p className="field__help">{loading ? t("Loading...") : t("No permission requests yet.")}</p>
         ) : (
           <ul className="link-list">
             {recent.map((r) => {
@@ -76,8 +112,11 @@ export default function Dashboard() {
               return (
                 <li key={id} className={`row--${statusTone(statusOf(r))}`}>
                   <a href={href("requests", id)}>
-                    <StatusBadge status={statusOf(r)} />
-                    <span>{pick(r, ["permissionRequestPurpose", "purpose"]) ?? <code className="mono">{id}</code>}</span>
+                    <ParticipantsInline info={infoOf(r)} />
+                    <span>
+                      {pick(details.byId[id], ["permissionRequestPurpose", "purpose"]) ?? <code className="mono">{id}</code>}
+                      <span className="link-list__sub">{participantsSummary(infoOf(r), t)}</span>
+                    </span>
                     <span className="link-list__extra">{formatDate(dateOf(r))}</span>
                   </a>
                 </li>
@@ -85,7 +124,7 @@ export default function Dashboard() {
             })}
           </ul>
         )}
-        <a href={href("requests")}>Show all →</a>
+        <a href={href("requests")}>{t("Show all")} →</a>
       </div>
     </div>
   );

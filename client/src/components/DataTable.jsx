@@ -1,4 +1,5 @@
 import { Fragment, useMemo, useState } from "react";
+import { useI18n } from "../lib/i18n.jsx";
 
 // Flattens one level of nested objects into "parent.child" keys so that the
 // table can show them as columns. Arrays and deeper objects are rendered as
@@ -7,7 +8,7 @@ function flatten(item) {
   const out = {};
   if (!item || typeof item !== "object") return { value: item };
   for (const [key, value] of Object.entries(item)) {
-    if (value && typeof value === "object" && !Array.isArray(value)) {
+    if (value && typeof value === "object" && !Array.isArray(value) && !value.parts) {
       for (const [k2, v2] of Object.entries(value)) out[`${key}.${k2}`] = v2;
     } else {
       out[key] = value;
@@ -16,15 +17,24 @@ function flatten(item) {
   return out;
 }
 
+// "lastChange" -> "Last Change", "permissionRequestId" -> "Permission Request Id"
+function humanize(key) {
+  return key
+    .replace(/[._]/g, " ")
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/(^|\s)[a-z]/g, (m) => m.toUpperCase());
+}
+
 function formatCell(value) {
   if (value === null || value === undefined) return "";
   if (typeof value === "object") return JSON.stringify(value);
   return String(value);
 }
 
-export default function DataTable({ items, preferredColumns = [], renderDetail, rowKey, onRowClick, cellRenderers = {}, toolbar, rowClassName }) {
+export default function DataTable({ items, preferredColumns = [], renderDetail, rowKey, onRowClick, cellRenderers = {}, toolbar, rowClassName, columnLabels = {}, defaultSort = null, hiddenColumns = [] }) {
+  const { t } = useI18n();
   const [filter, setFilter] = useState("");
-  const [sort, setSort] = useState({ key: null, dir: 1 });
+  const [sort, setSort] = useState(defaultSort ?? { key: null, dir: 1 });
   const [openKey, setOpenKey] = useState(null);
 
   const rows = useMemo(() => items.map((item, i) => ({ item, flat: flatten(item), key: rowKey?.(item) ?? i })), [items, rowKey]);
@@ -34,8 +44,8 @@ export default function DataTable({ items, preferredColumns = [], renderDetail, 
     for (const r of rows) Object.keys(r.flat).forEach((k) => seen.add(k));
     const preferred = preferredColumns.filter((c) => seen.has(c));
     const rest = [...seen].filter((c) => !preferred.includes(c));
-    return [...preferred, ...rest];
-  }, [rows, preferredColumns]);
+    return [...preferred, ...rest].filter((c) => !hiddenColumns.includes(c));
+  }, [rows, preferredColumns, hiddenColumns]);
 
   const visible = useMemo(() => {
     const needle = filter.trim().toLowerCase();
@@ -52,14 +62,14 @@ export default function DataTable({ items, preferredColumns = [], renderDetail, 
     return list;
   }, [rows, filter, sort]);
 
-  if (items.length === 0) return <p className="field__help">No entries.</p>;
+  if (items.length === 0) return <p className="field__help">{t("No entries.")}</p>;
 
   return (
-    <div>
+    <div className="data-table-root">
       <div className="table-toolbar">
-        <input type="search" placeholder="Filter rows..." value={filter} onChange={(e) => setFilter(e.target.value)} />
+        <input type="search" placeholder={t("Filter rows...")} value={filter} onChange={(e) => setFilter(e.target.value)} />
         <span className="field__help">
-          {visible.length} of {items.length} entries
+          {t("{n} of {total} entries", { n: visible.length, total: items.length })}
         </span>
         {toolbar}
       </div>
@@ -71,9 +81,9 @@ export default function DataTable({ items, preferredColumns = [], renderDetail, 
                 <th
                   key={c}
                   onClick={() => setSort((s) => ({ key: c, dir: s.key === c ? -s.dir : 1 }))}
-                  title="Sort"
+                  title={t("Sort")}
                 >
-                  {c}
+                  {columnLabels[c] ?? humanize(c)}
                   {sort.key === c ? (sort.dir === 1 ? " ▲" : " ▼") : ""}
                 </th>
               ))}
