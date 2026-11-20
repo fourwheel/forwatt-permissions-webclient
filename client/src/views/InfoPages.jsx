@@ -47,8 +47,9 @@ export const OPERATOR = {
   linkedin: "https://www.linkedin.com/in/laurin-vierrath/",
   // How long the web server keeps its access logs (see the CloudPanel /
   // Nginx log rotation on the server).
-  logRetention: "[Anzahl] Tage",
-  hoster: "[Name und Anschrift des Hosting-Anbieters]",
+  // From /etc/logrotate.d/<site-user>: "daily" + "rotate 7".
+  logRetentionDays: 7,
+  hoster: "STRATO AG, Otto-Ostrowski-Straße 7, 10249 Berlin",
 };
 
 const SOURCES = {
@@ -380,7 +381,7 @@ export function PrivacyPage() {
         </ul>
         <p>
           Nicht protokolliert werden die Inhalte von Anfragen und Antworten, also weder Client Secret noch Access
-          Token noch die Daten aus der API. Die Protokolle werden nach {OPERATOR.logRetention} automatisch gelöscht.
+          Token noch die Daten aus der API. Die Protokolle werden täglich rotiert und nach {OPERATOR.logRetentionDays} Tagen automatisch gelöscht.
           Zweck ist der sichere und stabile Betrieb (Fehlersuche, Abwehr von Angriffen); Rechtsgrundlage ist Art. 6
           Abs. 1 lit. f DSGVO.
         </p>
@@ -500,7 +501,7 @@ export function PrivacyPage() {
       </ul>
       <p>
         The contents of requests and responses are not logged – neither client secret, access token nor API data. Logs
-        are deleted automatically after {OPERATOR.logRetention}. The purpose is secure and stable operation
+        are rotated daily and deleted automatically after {OPERATOR.logRetentionDays} days. The purpose is secure and stable operation
         (troubleshooting, defending against attacks); the legal basis is Art. 6(1)(f) GDPR.
       </p>
       <p>The application process itself only writes start-up and error messages to its process log, no request contents.</p>
