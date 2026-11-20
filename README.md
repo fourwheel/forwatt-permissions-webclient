@@ -59,15 +59,23 @@ For deploying this to a CloudPanel-managed vServer, see [DEPLOY.md](DEPLOY.md).
 
 ## Usage
 
-1. In the "Authentication" section, select the environment (PRD or
+1. Open "Connection" in the sidebar, select the environment (PRD or
    ACC/PRPRD), enter Client ID and Client Secret, and click "Request
    access token". The access token is only kept in browser state and is
    lost on page reload.
-2. Use the "Prerequisites", "Permission Requests", and "Permission
-   Records" tabs to pick the desired action, fill in the fields, and
-   submit.
-3. The response (HTTP status + JSON) is shown directly below the
-   respective form.
+2. Once connected, all permission requests and their permission records
+   are loaded automatically:
+   - **Dashboard** - counts per status and the latest requests.
+   - **Permission Requests** / **Permission Records** - color-coded lists
+     with status filters, search and sorting; click an entry to open its
+     detail page.
+   - Detail pages offer the available actions: **Reject** a request,
+     **Terminate** a record, and **Duplicate & edit** (the API cannot
+     edit a request, so this prefills a new one).
+   - **New Request** - create a permission request.
+3. **API Explorer** keeps the original endpoint-by-endpoint forms
+   (Prerequisites, Permission Requests, Permission Records) showing the
+   raw HTTP status and JSON.
 
 The "API Base URL" in the auth section is set automatically based on the
 selected environment (PRD: `https://api.traxes.io/forwatt`, ACC/PRPRD:

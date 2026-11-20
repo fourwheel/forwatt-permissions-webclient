@@ -3,7 +3,7 @@ import DataHolderLookup from "./DataHolderLookup.jsx";
 import CreatePermissionRequestForm from "./CreatePermissionRequestForm.jsx";
 import BdewContactForm from "./BdewContactForm.jsx";
 
-export default function PermissionRequestFlow({ auth }) {
+export default function PermissionRequestFlow({ auth, initial, onCreated, title }) {
   const [lookup, setLookup] = useState(null);
 
   return (
@@ -31,7 +31,7 @@ export default function PermissionRequestFlow({ auth }) {
         </div>
       )}
 
-      <CreatePermissionRequestForm auth={auth} />
+      <CreatePermissionRequestForm auth={auth} initial={initial} onCreated={onCreated} title={title} />
     </div>
   );
 }

@@ -113,14 +113,14 @@ function MeasurandRow({ measurand, onChange, onRemove }) {
   );
 }
 
-export default function CreatePermissionRequestForm({ auth }) {
-  const [start, setStart] = useState(todayIso);
-  const [end, setEnd] = useState("");
-  const [dataStart, setDataStart] = useState("");
-  const [dataEnd, setDataEnd] = useState("");
-  const [serviceId, setServiceId] = useState("");
-  const [purpose, setPurpose] = useState("");
-  const [measurands, setMeasurands] = useState([]);
+export default function CreatePermissionRequestForm({ auth, initial, onCreated, title = "Create Permission Request" }) {
+  const [start, setStart] = useState(() => initial?.start || todayIso());
+  const [end, setEnd] = useState(initial?.end ?? "");
+  const [dataStart, setDataStart] = useState(initial?.dataStart ?? "");
+  const [dataEnd, setDataEnd] = useState(initial?.dataEnd ?? "");
+  const [serviceId, setServiceId] = useState(initial?.serviceId ?? "");
+  const [purpose, setPurpose] = useState(initial?.purpose ?? "");
+  const [measurands, setMeasurands] = useState(initial?.measurands ?? []);
 
   // Rules from the for.Watt business documentation (sections C and D).
   const today = todayIso();
@@ -144,18 +144,20 @@ export default function CreatePermissionRequestForm({ auth }) {
       permissionRequestPurpose: purpose || null,
       measurementRequestedInformation: measurands.map(toRequestedInformation),
     };
-    return callForwatt({
+    const result = await callForwatt({
       path: "v2/permissionrequest/create",
       method: "POST",
       body,
       token: auth.token,
       apiBaseUrl: auth.apiBaseUrl,
     });
+    if (result.ok) onCreated?.(result);
+    return result;
   });
 
   return (
     <section className="card">
-      <h2>Create Permission Request</h2>
+      <h2>{title}</h2>
       <p className="card__description">Creates a new permission request. The response contains a URL to complete the request.</p>
       <div className="method-line">
         <span className="method method--post">POST</span>

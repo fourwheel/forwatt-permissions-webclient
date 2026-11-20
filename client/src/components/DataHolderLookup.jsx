@@ -55,7 +55,7 @@ export default function DataHolderLookup({ auth, onResult }) {
           {state.loading ? "Checking..." : "Check"}
         </button>
       </form>
-      {!auth.token && <p className="field__help">Requires an access token (see Authentication above).</p>}
+      {!auth.token && <p className="field__help">Requires an access token (see Connection in the sidebar).</p>}
       {(state.error || (state.result && !state.result.ok)) && <ResponseView state={state} />}
     </section>
   );

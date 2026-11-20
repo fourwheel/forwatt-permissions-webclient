@@ -1,190 +1,214 @@
-import { useEffect, useState } from "react";
 import AuthPanel from "./components/AuthPanel.jsx";
-import EndpointForm from "./components/EndpointForm.jsx";
-import PermissionRequestFlow from "./components/PermissionRequestFlow.jsx";
+import { href, useRoute } from "./lib/router.js";
+import { DataProvider, useData } from "./lib/store.jsx";
+import ApiExplorer from "./views/ApiExplorer.jsx";
+import Dashboard from "./views/Dashboard.jsx";
+import NewRequestView from "./views/NewRequestView.jsx";
+import RecordDetail from "./views/RecordDetail.jsx";
+import RecordsView from "./views/RecordsView.jsx";
+import RequestDetail from "./views/RequestDetail.jsx";
+import RequestsView from "./views/RequestsView.jsx";
 
-const TABS = [
-  { id: "prereq", label: "Prerequisites" },
-  { id: "requests", label: "Permission Requests" },
-  { id: "records", label: "Permission Records" },
+// `locked`: only usable after logging in.
+const NAV = [
+  { id: "dashboard", label: "Dashboard", icon: "▦", locked: true },
+  { id: "requests", label: "Permission Requests", icon: "✉", locked: true },
+  { id: "records", label: "Permission Records", icon: "▤", locked: true },
+  { id: "new", label: "New Request", icon: "+", locked: true },
+  { divider: true },
+  { id: "explorer", label: "API Explorer", icon: "⌘" },
+  { id: "connection", label: "Login / Connection", icon: "⚿" },
 ];
 
-function tabFromHash() {
-  const id = window.location.hash.slice(1);
-  return TABS.some((t) => t.id === id) ? id : TABS[0].id;
+const LABELS = Object.fromEntries(NAV.filter((n) => n.id).map((n) => [n.id, n.label]));
+
+function environmentOf(apiBaseUrl) {
+  if (/ppd|acc/i.test(apiBaseUrl)) return { label: "ACC (Test)", tone: "warn" };
+  if (/api\.traxes\.io/i.test(apiBaseUrl)) return { label: "PRD (Production)", tone: "err" };
+  return { label: "Custom", tone: "neutral" };
+}
+
+function ConnectionView({ wanted }) {
+  const { auth, setAuth } = useData();
+  return (
+    <div>
+      {!auth.token && wanted && LABELS[wanted] && wanted !== "connection" && (
+        <div className="notice notice--brand">
+          <span className="notice__icon" aria-hidden>
+            🔒
+          </span>
+          <div>
+            <strong>"{LABELS[wanted]}" requires a login.</strong> Log in below - the page opens automatically
+            afterwards.
+          </div>
+        </div>
+      )}
+      <div className="page-head">
+        <div>
+          <h1>{auth.token ? "Connection" : "Log in to get started"}</h1>
+          <p className="page-head__sub">
+            {auth.token
+              ? "You are connected to the for.Watt API."
+              : "Most features of this suite need an access token for the for.Watt API."}
+          </p>
+        </div>
+      </div>
+
+      {!auth.token && (
+        <div className="unlock">
+          <div className="unlock__title">After logging in you can use:</div>
+          <ul>
+            <li>
+              <strong>Dashboard</strong> - all requests at a glance, by status
+            </li>
+            <li>
+              <strong>Permission Requests &amp; Records</strong> - browse, open, reject, terminate
+            </li>
+            <li>
+              <strong>New Request</strong> - create and duplicate permission requests
+            </li>
+            <li>
+              <strong>API Explorer</strong> - send raw API calls
+            </li>
+          </ul>
+        </div>
+      )}
+
+      <AuthPanel auth={auth} setAuth={setAuth} />
+      {auth.token && (
+        <div className="notice notice--ok">
+          <span className="notice__icon" aria-hidden>
+            ✓
+          </span>
+          <div>
+            Connected. Continue to the <a href={href("dashboard")}>Dashboard</a>.
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LoginBanner() {
+  return (
+    <div className="login-banner">
+      <span className="login-banner__icon" aria-hidden>
+        🔒
+      </span>
+      <div className="login-banner__text">
+        <strong>You are not logged in.</strong> Most features are locked until you request an access token.
+      </div>
+      <a className="btn" href={href("connection")}>
+        Log in
+      </a>
+    </div>
+  );
+}
+
+function Toasts() {
+  const { toasts } = useData();
+  return (
+    <div className="toasts">
+      {toasts.map((t) => (
+        <div key={t.id} className={`toast toast--${t.tone}`}>
+          {t.message}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Shell() {
+  const route = useRoute();
+  const { auth } = useData();
+  const [section, param] = route;
+  const env = environmentOf(auth.apiBaseUrl);
+  // Without a token every locked page shows the login page instead; the URL
+  // stays the same, so the wanted page appears right after logging in.
+  const page = auth.token || section === "explorer" ? section : "connection";
+
+  let content;
+  if (page === "requests" && param) content = <RequestDetail key={param} id={param} />;
+  else if (page === "requests") content = <RequestsView />;
+  else if (page === "records" && param) content = <RecordDetail key={param} id={param} />;
+  else if (page === "records") content = <RecordsView />;
+  else if (page === "new") content = <NewRequestView />;
+  else if (page === "explorer") content = <ApiExplorer auth={auth} sub={param} />;
+  else if (page === "connection") content = <ConnectionView wanted={section} />;
+  else content = <Dashboard />;
+
+  return (
+    <div className="shell">
+      <aside className="sidebar">
+        <a className="brand" href={href("dashboard")}>
+          <span className="brand__mark" aria-hidden>
+            fW
+          </span>
+          <span>
+            <strong>for.Watt</strong>
+            <small>Permissions Suite</small>
+          </span>
+        </a>
+        <nav className="nav">
+          {NAV.map((n, i) => {
+            if (n.divider) return <div key={i} className="nav__divider" />;
+            const locked = n.locked && !auth.token;
+            return (
+              <a
+                key={n.id}
+                href={href(n.id)}
+                className={`nav__item ${page === n.id ? "nav__item--active" : ""} ${locked ? "nav__item--locked" : ""}`}
+                title={locked ? "Log in first" : undefined}
+              >
+                <span className="nav__icon" aria-hidden>
+                  {n.icon}
+                </span>
+                <span className="nav__label">{n.label}</span>
+                {locked && (
+                  <span className="nav__lock" aria-label="locked">
+                    🔒
+                  </span>
+                )}
+              </a>
+            );
+          })}
+        </nav>
+        {auth.token ? (
+          <a className="conn" href={href("connection")}>
+            <span className="conn__dot conn__dot--ok" />
+            <span>
+              Connected
+              <small>
+                <span className={`env env--${env.tone}`}>{env.label}</span>
+              </small>
+            </span>
+          </a>
+        ) : (
+          <a className="conn conn--login" href={href("connection")}>
+            <span className="conn__dot" />
+            <span>
+              Not logged in
+              <small>Click to log in</small>
+            </span>
+          </a>
+        )}
+      </aside>
+      <main className="main">
+        {!auth.token && page !== "connection" && <LoginBanner />}
+        {content}
+        <footer className="app__footer">
+          <p>Unofficial web client for the for.Watt Data Permissions API 2.0. No inputs or responses are stored.</p>
+        </footer>
+      </main>
+      <Toasts />
+    </div>
+  );
 }
 
 export default function App() {
-  const [auth, setAuth] = useState({ token: null, apiBaseUrl: "https://api.traxes.io/forwatt" });
-  const [tab, setTab] = useState(tabFromHash);
-
-  useEffect(() => {
-    const onHashChange = () => setTab(tabFromHash());
-    window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
-  }, []);
-
   return (
-    <div className="app">
-      <header className="app__header">
-        <h1>for.Watt Data Permissions - Client</h1>
-        <p>Web client for the for.Watt Data Permissions API (v2.0). No data is stored.</p>
-      </header>
-
-      <AuthPanel auth={auth} setAuth={setAuth} />
-
-      <nav className="tabs">
-        {TABS.map((t) => (
-          <a
-            key={t.id}
-            href={`#${t.id}`}
-            className={`tab ${tab === t.id ? "tab--active" : ""}`}
-            onClick={(e) => {
-              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-              e.preventDefault();
-              window.location.hash = t.id;
-              setTab(t.id);
-            }}
-          >
-            {t.label}
-          </a>
-        ))}
-      </nav>
-
-      <div className="tab-panel" hidden={tab !== "prereq"}>
-          <EndpointForm
-            title="Measurand Capabilities"
-            description="List of all measurand codes with their related information."
-            method="GET"
-            pathTemplate="v2/measurand-capabilities"
-            fields={[]}
-            hasBody={false}
-            auth={auth}
-          />
-          <EndpointForm
-            title="Active Data Holders"
-            description="All active companies of type MPO."
-            method="GET"
-            pathTemplate="v2/active-dataholders"
-            fields={[]}
-            hasBody={false}
-            auth={auth}
-          />
-      </div>
-
-      <div className="tab-panel" hidden={tab !== "requests"}>
-          <PermissionRequestFlow auth={auth} />
-
-          <EndpointForm
-            title="Get Permission Request"
-            description="Returns the details of an existing permission request."
-            method="GET"
-            pathTemplate="v2/permissionrequest/{id}"
-            hasBody={false}
-            fields={[
-              { name: "id", label: "Permission Request Id (guid)", type: "text", required: true, isPath: true, placeholder: "3fa85f64-5717-4562-b3fc-2c963f66afa6" },
-            ]}
-            auth={auth}
-          />
-
-          <EndpointForm
-            title="Permission Request State Changes"
-            description="Returns status changes of permission requests matching the filter. Only the latest status change per permission request is returned."
-            method="POST"
-            pathTemplate="v2/permissionrequest/statechanges"
-            hasBody
-            fields={[
-              { name: "startDate", label: "Start Date", type: "date", help: "If set, endDate must be set as well." },
-              { name: "endDate", label: "End Date", type: "date" },
-              {
-                name: "state",
-                label: "Status",
-                type: "select",
-                options: ["created", "waitingForApproval", "approved", "rejected"],
-              },
-              { name: "permissionRequestId", label: "Permission Request Id (guid)", type: "text" },
-              { name: "pageSize", label: "Page Size (max 50, default 50)", type: "number" },
-              { name: "pageNumber", label: "Page Number (default 1)", type: "number" },
-            ]}
-            auth={auth}
-          />
-
-          <EndpointForm
-            title="Reject Permission Request"
-            description="Rejects an existing permission request."
-            method="POST"
-            pathTemplate="v2/permissionrequest/reject/{id}"
-            hasBody={false}
-            danger
-            fields={[
-              { name: "id", label: "Permission Request Id (guid)", type: "text", required: true, isPath: true, placeholder: "3fa85f64-5717-4562-b3fc-2c963f66afa6" },
-            ]}
-            auth={auth}
-          />
-      </div>
-
-      <div className="tab-panel" hidden={tab !== "records"}>
-          <EndpointForm
-            title="Find Permission Records"
-            description={`Searches permission records by filter criteria. Enter list fields as comma-separated values. This endpoint can also be used to find a permission record's id via its permission request id - look for the "id" field in the response.`}
-            method="POST"
-            pathTemplate="v2/permissionrecord/find"
-            hasBody
-            fields={[
-              { name: "permissionRecordId", label: "Permission Record Id (guid)", type: "text" },
-              { name: "dataOwnerId", label: "Data Owner Id (guid)", type: "text" },
-              { name: "deliveryPointIds", label: "Delivery Point Ids (comma-separated, guids)", type: "csv" },
-              { name: "permissionRequestIds", label: "Permission Request Ids (comma-separated, guids)", type: "csv" },
-              { name: "deliveryPointCodeValues", label: "Delivery Point Code Values / Malo-Melo (comma-separated)", type: "csv" },
-            ]}
-            auth={auth}
-          />
-
-          <EndpointForm
-            title="Get Permission Record"
-            description="Returns a single permission record."
-            method="GET"
-            pathTemplate="v2/permissionrecord/{id}"
-            hasBody={false}
-            fields={[
-              { name: "id", label: "Permission Record Id (guid)", type: "text", required: true, isPath: true, placeholder: "3fa85f64-5717-4562-b3fc-2c963f66afa6" },
-            ]}
-            auth={auth}
-          />
-
-          <EndpointForm
-            title="Permission Record State Changes (Terminated)"
-            description="Returns termination status changes of permission records matching the filter."
-            method="POST"
-            pathTemplate="v2/permissionrecord/statechanges/terminated"
-            hasBody
-            fields={[
-              { name: "startDate", label: "Start Date", type: "date", help: "If set, endDate must be set as well." },
-              { name: "endDate", label: "End Date", type: "date" },
-              { name: "permissionRecordId", label: "Permission Record Id (guid)", type: "text" },
-              { name: "pageSize", label: "Page Size (max 50, default 50)", type: "number" },
-              { name: "pageNumber", label: "Page Number (default 1)", type: "number" },
-            ]}
-            auth={auth}
-          />
-
-          <EndpointForm
-            title="Terminate Permission Record"
-            description="Terminates the permission record and all other permission records linked to the same permission request. This action cannot be undone."
-            method="DELETE"
-            pathTemplate="v2/permissionrecord/terminate/{id}"
-            hasBody={false}
-            danger
-            fields={[
-              { name: "id", label: "Permission Record Id (guid)", type: "text", required: true, isPath: true, placeholder: "3fa85f64-5717-4562-b3fc-2c963f66afa6" },
-            ]}
-            auth={auth}
-          />
-      </div>
-
-      <footer className="app__footer">
-        <p>Unofficial web client for the for.Watt Data Permissions API 2.0. No inputs or responses are stored.</p>
-      </footer>
-    </div>
+    <DataProvider>
+      <Shell />
+    </DataProvider>
   );
 }
