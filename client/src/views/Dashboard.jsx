@@ -55,6 +55,16 @@ export default function Dashboard() {
     approvedBreakdown.ended && t("{n} ended", { n: approvedBreakdown.ended }),
   ].filter(Boolean);
 
+  const partialCount = infos.filter((i) => i.partial).length;
+  const createdInfos = infos.filter((i) => i.ownerLinked !== undefined);
+  const linkedCount = createdInfos.filter((i) => i.ownerLinked).length;
+  const createdParts = createdInfos.length
+    ? [
+        linkedCount && t("{n} link opened", { n: linkedCount }),
+        createdInfos.length - linkedCount && t("{n} link not opened yet", { n: createdInfos.length - linkedCount }),
+      ].filter(Boolean)
+    : [];
+
   if (!auth.token) return <NeedsConnection />;
 
   const loading = requests.loading || records.loading;
@@ -95,7 +105,13 @@ export default function Dashboard() {
             <div className="tile__value">{loading && !requests.loadedAt ? "…" : counts[s.id] ?? 0}</div>
             <div className="tile__label">{t(s.label)}</div>
             <div className="tile__sub">
-              {s.id === "approved" && approvedParts.length ? approvedParts.join(" · ") : t(s.hint)}
+              {s.id === "approved" && approvedParts.length
+                ? approvedParts.join(" · ")
+                : s.id === "waitingForApproval" && partialCount
+                  ? t("{n} partly agreed", { n: partialCount })
+                  : s.id === "created" && createdParts.length
+                  ? createdParts.join(" · ")
+                  : t(s.hint)}
             </div>
           </a>
         ))}

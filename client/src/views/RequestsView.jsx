@@ -19,7 +19,7 @@ import { href, navigate } from "../lib/router.js";
 import { REQUEST_STATUSES, requestStatusInfo, statusLabel } from "../lib/status.js";
 import { useI18n } from "../lib/i18n.jsx";
 import { requestParticipants } from "../lib/participants.js";
-import { ParticipantsInline, ParticipantsLegend, SituationBadge, participantsSummary, participantsTone } from "../components/Participants.jsx";
+import { ParticipantsInline, ParticipantsLegend, SituationBadge, participantsSummary, participantsTone, MpoProgressBar } from "../components/Participants.jsx";
 import { useData } from "../lib/store.jsx";
 
 const REQUEST_STATES = REQUEST_STATUSES.map((x) => x.id);
@@ -168,6 +168,7 @@ export default function RequestsView() {
             purpose: pick(d, ["permissionRequestPurpose", "purpose"]) ?? (d ? "" : "…"),
             deliveryPoints: d ? requestDeliveryPointsOf(d).join(", ") : "…",
             msb: d ? requestHoldersOf(d, catalog.dataHolders).join(", ") : "…",
+            gridUser: d ? pick(d, ["dataOwner.name"]) ?? "" : "…",
             records: recs,
             lastChange: dateOf(it),
             permissionRequestId: id,
@@ -215,7 +216,7 @@ export default function RequestsView() {
           <DataTable
             items={items}
             rowKey={requestIdOf}
-            preferredColumns={["participants", "situation", "purpose", "records", "msb", "deliveryPoints", "lastChange"]}
+            preferredColumns={["participants", "situation", "gridUser", "purpose", "records", "msb", "deliveryPoints", "lastChange"]}
             hiddenColumns={["permissionRequestId", "status"]}
             defaultSort={{ key: "lastChange", dir: -1 }}
             columnLabels={{
@@ -225,6 +226,7 @@ export default function RequestsView() {
               purpose: t("Purpose"),
               records: t("Permission Records"),
               msb: t("Metering Point Operator"),
+              gridUser: t("Grid User"),
               deliveryPoints: t("Delivery Points"),
               lastChange: t("Last Change"),
               permissionRequestId: t("Request ID"),
@@ -233,7 +235,14 @@ export default function RequestsView() {
               ...withDateRenderers(items),
               records: (_, row) => <RecordChips records={row.records} />,
               participants: (_, row) => (row.participants ? <ParticipantsInline info={row.participants} /> : "…"),
-              situation: (_, row) => <SituationBadge info={row.participants} text={row.situation} />,
+              situation: (_, row) => (
+                <span className="situation-cell">
+                  <SituationBadge info={row.participants} text={row.situation} />
+                  {row.participants?.partial && <MpoProgressBar info={row.participants} />}
+                </span>
+              ),
+              gridUser: (v, row) =>
+                v ? v : row.participants?.ownerLinked === false ? <span className="muted">{t("Link not opened yet")}</span> : v,
             }}
             rowClassName={(it) => `row--${it.participants ? participantsTone(it.participants) : statusTone(statusOf(it))}`}
             onRowClick={(it) => requestIdOf(it) && navigate("requests", requestIdOf(it))}

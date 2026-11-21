@@ -66,7 +66,7 @@ export function RoleIcon({ role, size = 20 }) {
 }
 
 function StateMark({ state }) {
-  const mark = { ok: "✓", waiting: "…", rejected: "✕", revoked: "✕", expired: "⏱", ended: "■", idle: "" }[state];
+  const mark = { ok: "✓", partial: "◐", waiting: "…", rejected: "✕", revoked: "✕", expired: "⏱", ended: "■", idle: "" }[state];
   if (!mark) return null;
   return <span className="pt-mark">{mark}</span>;
 }
@@ -83,7 +83,7 @@ export function ParticipantsInline({ info }) {
           <span
             key={r}
             className={`pt-dot pt--${p.state}`}
-            title={`${t(ROLE_LONG[r])}${p.name ? ` – ${p.name}` : ""}: ${t(STATE_TEXT[p.state])}`}
+            title={`${t(ROLE_LONG[r])}${p.name ? ` – ${p.name}` : ""}: ${r === "mpo" && info.partial ? partialText(info, t) : t(STATE_TEXT[p.state])}`}
           >
             <RoleIcon role={r} size={15} />
             <StateMark state={p.state} />
@@ -98,6 +98,7 @@ export function ParticipantsInline({ info }) {
 export function participantsTone(info) {
   if (!info) return "muted";
   const states = ROLES.map((r) => info.parts[r].state);
+  if (info.partial) return "partial";
   if (info.waitingFor) return "warn";
   if (states.some((s) => s === "rejected" || s === "revoked")) return "err";
   if (states.some((s) => s === "expired") || states.every((s) => s === "ended")) return "muted";
@@ -117,10 +118,52 @@ export function SituationBadge({ info, text }) {
   );
 }
 
+/** Badge for a request in "waitingForApproval" where some MSBs already agreed. */
+export function PartialBadge({ info }) {
+  const { t } = useI18n();
+  return (
+    <span className="status status--partial" title={participantsSummary(info, t)}>
+      {t("MPO partly agreed")} ({info.mpoProgress.approved}/{info.mpoProgress.total})
+    </span>
+  );
+}
+
+/** One segment per MSB: green = agreed, yellow = pending, red = rejected. */
+export function MpoProgressBar({ info }) {
+  const { t } = useI18n();
+  const prog = info?.mpoProgress;
+  if (!prog || prog.total < 2) return null;
+  const label = t("{done} of {total} MPOs agreed", { done: prog.approved, total: prog.total });
+  return (
+    <span className="mpo-bar" title={`${label}: ${prog.holders.map((h) => `${h.name} ${{ ok: "✓", waiting: "…", rejected: "✕" }[h.state]}`).join(", ")}`} aria-label={label}>
+      <span className="mpo-bar__track">
+        {prog.holders.map((h) => (
+          <span key={h.name} className={`mpo-bar__seg mpo-bar__seg--${h.state}`} />
+        ))}
+      </span>
+      <span className="mpo-bar__text">
+        {prog.approved}/{prog.total}
+      </span>
+    </span>
+  );
+}
+
+function partialText(info, t) {
+  return t("Partly agreed ({done} of {total})", { done: info.mpoProgress.approved, total: info.mpoProgress.total });
+}
+
 /** One-line summary: "Waiting for MSB", "Ready", "Revoked by data owner", ... */
 export function participantsSummary(info, t, { short = false } = {}) {
   if (!info) return "";
   if (info.ready) return short ? t("Ready") : t("Ready – metering data can be transferred to the ESP");
+  if (info.ownerLinked !== undefined && !short)
+    return info.ownerLinked
+      ? t("Waiting for grid user – link opened, decision pending")
+      : t("Waiting for grid user – link not opened yet");
+  if (info.partial)
+    return short
+      ? t("MPO partly agreed")
+      : t("MPO partly agreed – {done} of {total} MPOs agreed, first records created", { done: info.mpoProgress.approved, total: info.mpoProgress.total });
   if (info.waitingFor) return t("Waiting for {who}", { who: t(ROLE_LABELS[info.waitingFor]) });
   const states = ROLES.map((r) => info.parts[r].state);
   if (states.includes("revoked")) return t("Revoked by {who}", { who: t(ROLE_LABELS[info.actor] ?? "unknown") });
@@ -142,7 +185,9 @@ export function ParticipantsPanel({ info }) {
   const summary = participantsSummary(info, t);
   const tone = info.ready
     ? "ok"
-    : info.waitingFor
+    : info.partial
+      ? "partial"
+      : info.waitingFor
       ? "waiting"
       : ROLES.some((r) => ["rejected", "revoked"].includes(info.parts[r].state))
         ? "rejected"
@@ -166,10 +211,35 @@ export function ParticipantsPanel({ info }) {
                 </div>
                 <div className="pt-card__body">
                   <div className="pt-card__role">{t(ROLE_LONG[r])}</div>
-                  <div className="pt-card__name">{p.name ?? "–"}</div>
+                  <div className="pt-card__name">{r === "mpo" && info.mpoProgress?.total > 1 && ["waiting", "partial"].includes(p.state) ? t("{n} metering point operators", { n: info.mpoProgress.total }) : p.name ?? (r === "dataOwner" && info.ownerLinked === false ? t("not known yet") : "–")}</div>
                   <div className="pt-card__state">
-                    <StateMark state={p.state} /> {t(STATE_TEXT[p.state])}
+                    {r === "mpo" && info.partial ? (
+                      <>
+                        <StateMark state="partial" /> {partialText(info, t)}
+                      </>
+                    ) : (
+                      <>
+                        <StateMark state={p.state} /> {t(STATE_TEXT[p.state])}
+                      </>
+                    )}
                   </div>
+                  {r === "mpo" && info.mpoProgress?.total > 1 && ["waiting", "partial"].includes(p.state) && (
+                    <MpoProgressBar info={info} />
+                  )}
+                  {r === "mpo" && info.mpoProgress?.total > 1 && ["waiting", "partial"].includes(p.state) && (
+                    <ul className="pt-holders">
+                      {info.mpoProgress.holders.map((h) => (
+                        <li key={h.name} className={`pt-holder pt-holder--${h.state}`}>
+                          <span className="pt-holder__mark">{{ ok: "✓", waiting: "…", rejected: "✕" }[h.state]}</span> {h.name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {r === "dataOwner" && info.ownerLinked !== undefined && (
+                    <div className={`pt-card__note ${info.ownerLinked ? "pt-card__note--on" : ""}`}>
+                      {info.ownerLinked ? t("Link opened – linked to their account") : t("Link not opened yet")}
+                    </div>
+                  )}
                 </div>
               </div>
             </Fragment>
@@ -191,9 +261,9 @@ export function ParticipantsLegend() {
         </span>
       ))}
       <span className="pt-legend__sep" />
-      {["ok", "waiting", "rejected", "idle"].map((s) => (
+      {["ok", "partial", "waiting", "rejected", "idle"].map((s) => (
         <span key={s} className="pt-legend__item">
-          <span className={`pt-swatch pt--${s}`} /> {t({ ok: "agreed", waiting: "waiting for response", rejected: "rejected / revoked", idle: "not yet / ended" }[s])}
+          <span className={`pt-swatch pt--${s}`} /> {t({ ok: "agreed", partial: "partly agreed", waiting: "waiting for response", rejected: "rejected / revoked", idle: "not yet / ended" }[s])}
         </span>
       ))}
     </div>

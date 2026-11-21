@@ -16,13 +16,14 @@ import {
   statusOf,
   statusTone,
   toPrefill,
+  completionLinkFor,
 } from "../lib/model.js";
 import { href, navigate } from "../lib/router.js";
 import { REQUEST_STATUSES, canRejectRequest, requestStatusInfo, statusLabel } from "../lib/status.js";
 import { useData } from "../lib/store.jsx";
 import { useI18n } from "../lib/i18n.jsx";
 import { requestParticipants } from "../lib/participants.js";
-import { ParticipantsPanel } from "../components/Participants.jsx";
+import { PartialBadge, ParticipantsPanel } from "../components/Participants.jsx";
 import { NeedsConnection } from "./RequestsView.jsx";
 
 export function Fact({ label, children }) {
@@ -112,7 +113,10 @@ export default function RequestDetail({ id }) {
   const purpose = pick(data, ["permissionRequestPurpose", "purpose"]);
   const serviceId = pick(data, ["serviceId", "service.id"]);
   const measurands = pick(data, MEASURAND_REQUEST_KEYS);
-  const completionUrl = pick(data, ["url", "permissionRequestUrl", "redirectUrl", "link"]);
+  const completionUrl = pick(data, ["url", "permissionRequestUrl", "redirectUrl", "link"]) ?? completionLinkFor(auth.apiBaseUrl, id);
+  const partInfo = data ? requestParticipants(data, listItem, linkedRecords, catalog.dataHolders) : null;
+  // Only useful while the grid user has not completed the request yet.
+  const showCompletion = completionUrl && String(status ?? "").toLowerCase() === "created";
 
   const reject = async () => {
     setBusy(true);
@@ -145,7 +149,7 @@ export default function RequestDetail({ id }) {
           <div className="page-head__eyebrow">{t("Permission Request")}</div>
           <h1>{purpose || <code className="mono">{id}</code>}</h1>
           <div className="page-head__meta">
-            <StatusBadge status={status} />
+            {partInfo?.partial ? <PartialBadge info={partInfo} /> : <StatusBadge status={status} />}
             <code className="mono">{id}</code>
             <CopyButton value={id} label={t("Copy ID")} />
           </div>
@@ -181,12 +185,24 @@ export default function RequestDetail({ id }) {
         </p>
       )}
 
-      <ParticipantsPanel info={requestParticipants(data, listItem, linkedRecords, catalog.dataHolders)} />
+      <ParticipantsPanel info={partInfo} />
+
+      {showCompletion && (
+        <div className="card completion-card">
+          <h2>{t("Link for the grid user")}</h2>
+          <p className="muted">{t("Send this link to the grid user. They complete the request, check the details and grant the permission:")}</p>
+          {/* Deliberately not clickable: meant for the grid user, not the ESP. */}
+          <div className="link-row">
+            <code className="link-text">{completionUrl}</code>
+            <CopyButton value={completionUrl} label={t("Copy link")} />
+          </div>
+        </div>
+      )}
       <Lifecycle status={status} />
 
       <div className="card facts">
         <Fact label={t("Status")}>
-          <StatusBadge status={status} />
+          {partInfo?.partial ? <PartialBadge info={partInfo} /> : <StatusBadge status={status} />}
         </Fact>
         <Fact label={t("Start")}>{formatDate(pick(data, ["start", "startDate"]))}</Fact>
         <Fact label={t("End")}>{formatDate(pick(data, ["end", "endDate"])) || t("no expiry")}</Fact>
@@ -202,11 +218,6 @@ export default function RequestDetail({ id }) {
         {listItem?.actorId && !listItem.listedStatus && (
           <Fact label={t("Last status change by")}>
             {actorOf(listItem.actorId, data) ? <ActorLabel actor={actorOf(listItem.actorId, data)} /> : null}
-          </Fact>
-        )}
-        {completionUrl && (
-          <Fact label={t("Completion link")}>
-            <CopyButton value={completionUrl} label={t("Copy link")} />
           </Fact>
         )}
       </div>

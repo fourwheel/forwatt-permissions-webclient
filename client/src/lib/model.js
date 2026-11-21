@@ -450,3 +450,30 @@ export function actorOf(actorId, request) {
   if (mpo) return { role: "mpo", name: mpo.name ?? null };
   return null;
 }
+
+// --- Completion link for the grid user ---------------------------------------
+// The create call returns e.g. https://ppd.forwatt.io/finalizeGenerateRequest?openRequestId=<id>,
+// but the request detail does not contain it. The link only depends on the
+// request id, so it can be rebuilt. The front-end address per environment is
+// learned from create responses (kept in memory only) with known defaults.
+const COMPLETION_BASES = [
+  { api: /api\.ppd\.traxes\.io/i, base: "https://ppd.forwatt.io/finalizeGenerateRequest" },
+  { api: /\/\/api\.traxes\.io/i, base: "https://forwatt.io/finalizeGenerateRequest" },
+];
+const learnedBases = new Map();
+
+export function rememberCompletionLink(apiBaseUrl, link) {
+  try {
+    const u = new URL(link);
+    if (!u.searchParams.get("openRequestId")) return;
+    learnedBases.set(apiBaseUrl, u.origin + u.pathname);
+  } catch {
+    /* not a URL */
+  }
+}
+
+export function completionLinkFor(apiBaseUrl, requestId) {
+  if (!requestId) return null;
+  const base = learnedBases.get(apiBaseUrl) ?? COMPLETION_BASES.find((b) => b.api.test(apiBaseUrl ?? ""))?.base;
+  return base ? `${base}?openRequestId=${encodeURIComponent(requestId)}` : null;
+}

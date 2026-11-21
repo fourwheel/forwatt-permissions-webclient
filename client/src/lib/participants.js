@@ -2,12 +2,35 @@
 // permission, a state that the UI shows as a colored role icon:
 //   ok       - agreed / done (green)
 //   waiting  - we are waiting for this participant's answer (yellow)
+//   partial  - some of several MSBs agreed, others still pending (striped)
 //   idle     - not their turn yet (grey)
 //   rejected - rejected the request (red)
 //   revoked  - revoked the permission (red)
 //   expired  - did not answer before the end date (grey)
 //   ended    - the permission period is over (grey)
-import { actorOf, pick, recordStatusOf, requestHoldersOf, statusOf } from "./model.js";
+import { MEASURAND_REQUEST_KEYS, actorOf, pick, recordHolderLabel, recordStatusOf, requestHoldersOf, statusOf } from "./model.js";
+
+// Per metering point operator: have all their measuring products been approved?
+// Each MSB decides independently; a permission record is created as soon as
+// one of them agrees, while the request stays "waitingForApproval".
+export function mpoProgressOf(request, dataHolders = []) {
+  const infos = pick(request, MEASURAND_REQUEST_KEYS);
+  if (!Array.isArray(infos) || !infos.length) return null;
+  const byHolder = new Map();
+  for (const m of infos) {
+    const name = recordHolderLabel(m, dataHolders) || "?";
+    const s = String(m?.status ?? "").toLowerCase();
+    const prev = byHolder.get(name);
+    const state = s === "approved" ? "ok" : s === "rejected" ? "rejected" : "waiting";
+    // A holder counts as agreed only if all of their measuring products are.
+    byHolder.set(name, !prev || prev === state ? state : prev === "rejected" || state === "rejected" ? "rejected" : "waiting");
+  }
+  // Agreed first, so the progress bar fills from the left.
+  const order = { ok: 0, waiting: 1, rejected: 2 };
+  const holders = [...byHolder].map(([name, state]) => ({ name, state })).sort((a, b) => order[a.state] - order[b.state]);
+  const approved = holders.filter((h) => h.state === "ok").length;
+  return { holders, approved, total: holders.length };
+}
 
 export const ROLES = ["esp", "dataOwner", "mpo"];
 
@@ -42,8 +65,17 @@ export function requestParticipants(request, listItem, records = [], dataHolders
   const listed = String(listItem?.listedStatus ?? statusOf(listItem) ?? "").toLowerCase();
   const actor = listed === status ? actorOf(listItem?.actorId, request) : null;
 
-  if (status === "created") return build({ esp: "ok", dataOwner: "waiting", mpo: "idle" }, n);
-  if (status === "waitingforapproval") return build({ esp: "ok", dataOwner: "ok", mpo: "waiting" }, n);
+  // Once the grid user opens the completion link, the request is linked to
+  // their account (dataOwner gets a name) - even before they decide.
+  if (status === "created") return build({ esp: "ok", dataOwner: "waiting", mpo: "idle" }, n, { ownerLinked: Boolean(n.dataOwner) });
+  if (status === "waitingforapproval") {
+    const mpoProgress = mpoProgressOf(request, dataHolders);
+    const partial = Boolean(mpoProgress && mpoProgress.approved > 0 && mpoProgress.approved < mpoProgress.total);
+    const info = build({ esp: "ok", dataOwner: "ok", mpo: "waiting" }, n, { mpoProgress, partial });
+    // Own color for "some MSBs agreed" (still waiting for the others).
+    if (partial) info.parts.mpo.state = "partial";
+    return info;
+  }
 
   if (status === "rejected" || status === "expired") {
     // Whose turn was it? Known from the actor, otherwise from the last

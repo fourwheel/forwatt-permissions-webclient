@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { callForwatt } from "../api.js";
 import { useI18n } from "../lib/i18n.jsx";
-import { formatDate, holderBdewOf, holderIdOf, holderLabelOf, measurandCodeOf, measurandLabelOf, measurandPropertiesOf } from "../lib/model.js";
+import { formatDate, holderBdewOf, holderIdOf, holderLabelOf, measurandCodeOf, measurandLabelOf, measurandPropertiesOf, rememberCompletionLink } from "../lib/model.js";
 import { href } from "../lib/router.js";
 import { useData } from "../lib/store.jsx";
 import {
@@ -301,6 +301,7 @@ export default function NewRequestForm({ auth, initial, onCreated }) {
         measurementRequestedInformation: measurands.map(toRequestedInformation),
       };
       const res = await callForwatt({ path: "v2/permissionrequest/create", method: "POST", body, token: auth.token, apiBaseUrl: auth.apiBaseUrl });
+      if (res.ok && typeof res.data === "string") rememberCompletionLink(auth.apiBaseUrl, res.data.trim());
       setResult(res);
       if (res.ok) onCreated?.(res);
     } catch (err) {
